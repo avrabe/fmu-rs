@@ -11,6 +11,28 @@ env:
 
 jobs:
 
+  build-rust:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build
+      run: cargo build --verbose
+    - name: Run tests
+      run: cargo test --verbose
+
+  create-bitbake:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: create-bitbake
+        run: cargo install cargo-bitbake --locked
+        run: cargo bitbake
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v1
+        with:
+          name: bitbake file
+          path: *.bb
+
   sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
@@ -24,8 +46,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           
-  check:
-    name: Rust project
+  coverity-check:
+    name: Coverity-check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
