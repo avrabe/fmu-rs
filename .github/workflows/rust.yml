@@ -25,8 +25,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: create-bitbake
-        run: cargo install cargo-bitbake --locked
-        run: cargo bitbake
+        run: |
+        cargo install cargo-bitbake --locked
+        cargo bitbake
       - name: Archive code coverage results
         uses: actions/upload-artifact@v1
         with:
