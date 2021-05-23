@@ -1,8 +1,12 @@
-extern crate ini;
-extern crate hawkbit;
 extern crate clap;
-use hawkbit::ddi::{Client};
+extern crate hawkbit;
+extern crate ini;
+use hawkbit::ddi::{Client, Execution, Finished};
 use ini::Ini;
+use serde::Serialize;
+use tokio::time::sleep;
+use std::path::Path;
+
 
 // (Full example with detailed comments in examples/01d_quick_example.rs)
 //
@@ -25,8 +29,15 @@ struct Opts {
 }
 
 
+#[derive(Debug, Serialize)]
+pub(crate) struct ConfigData {
+    #[serde(rename = "HwRevision")]
+    hw_revision: String,
+}
+
+
 #[tokio::main]
-pub async fn main() {
+async fn main() -> Result<(),()> {
     let opts: Opts = Opts::parse();
 
     // Gets a value for config if supplied by user, or defaults to "default.conf"
@@ -41,10 +52,13 @@ pub async fn main() {
         3 | _ => println!("Don't be crazy"),
     }
 
-
     let conf = Ini::load_from_file(opts.config).unwrap();
 
-    let server_host_name = conf.section(Some("server")).unwrap().get("server_host_name").unwrap();
+    let server_host_name = conf
+        .section(Some("server"))
+        .unwrap()
+        .get("server_host_name")
+        .unwrap();
     let section = conf.section(Some("client")).unwrap();
     let hawkbit_vendor_name = section.get("hawkbit_vendor_name").unwrap();
     let hawkbit_url_port = section.get("hawkbit_url_port").unwrap();
@@ -52,7 +66,11 @@ pub async fn main() {
     let tenant_id = section.get("hawkbit_tenant_id").unwrap();
     let target_name = section.get("hawkbit_target_name").unwrap();
     let auth_token = section.get("hawkbit_auth_token").unwrap();
-    let log_level = section.get("log_level").unwrap().parse::<log::Level>().unwrap();
+    let log_level = section
+        .get("log_level")
+        .unwrap()
+        .parse::<log::Level>()
+        .unwrap();
     //let foo: Ipv4Addr = tommy.parse::<Ipv4Addr>().unwrap();
 
     println!("{:?}", server_host_name);
@@ -65,8 +83,60 @@ pub async fn main() {
     println!("{:?}", log_level);
     // more program logic goes here...
 
-    let ddi = Client::new( &server_host_name,&tenant_id, &target_name, &auth_token ).unwrap();
-    let reply = ddi.poll().await;
-    dbg!(&reply);
+    let hostname = format!("http://{}:{}", server_host_name, hawkbit_url_port);
+    let ddi = Client::new(&hostname, &tenant_id, &target_name, &auth_token).unwrap();
+    loop {
+        let reply = ddi.poll().await.expect("buh");
+        dbg!(&reply);
 
+        if let Some(request) = reply.config_data_request() {
+            println!("Uploading config data");
+            let data = ConfigData {
+                hw_revision: "1.0".to_string(),
+            };
+
+            request
+                .upload(Execution::Closed, Finished::Success, None, data, vec![])
+                .await.expect("foo");
+        }
+
+        if let Some(update) = reply.update() {
+            println!("Pending update");
+
+            let update = update.fetch().await;
+            let update = match update {
+                Ok(update) => update,
+                Err(error) => panic!("Problem opening the file: {:?}", error),
+        
+            };
+            dbg!(&update);
+
+            update
+                .send_feedback(Execution::Proceeding, Finished::None, vec!["Downloading"])
+                .await.expect("ff");
+
+            let artifacts = update.download(Path::new("./download/")).await.expect("kkkk");
+            dbg!(&artifacts);
+
+            #[cfg(feature = "hash-digest")]
+            for artifact in artifacts {
+                #[cfg(feature = "hash-md5")]
+                artifact.check_md5().await?;
+                #[cfg(feature = "hash-sha1")]
+                artifact.check_sha1().await?;
+                #[cfg(feature = "hash-sha256")]
+                artifact.check_sha256().await?;
+            }
+
+            //let repo = &ostree::Repo::open_at(libc::AT_FDCWD, "./download/", gio::NONE_CANCELLABLE)?;
+
+            update
+                .send_feedback(Execution::Closed, Finished::Success, vec![])
+                .await.expect("fff");
+        }
+
+        let t = reply.polling_sleep().expect("fff");
+        println!("sleep for {:?}", t);
+        sleep(t).await;
+    }
 }
