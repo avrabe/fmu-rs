@@ -1,13 +1,64 @@
 extern crate clap;
 extern crate hawkbit;
 extern crate ini;
+use ostree::{RepoMode};
 use hawkbit::ddi::{Client, Execution, Finished};
 use ini::Ini;
 use serde::Serialize;
 use tokio::time::sleep;
 use std::path::Path;
 
+use std::fs;
 
+pub fn path_exists(path: &str) -> bool {
+    fs::metadata(path).is_ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn current_path() {
+        assert_eq!(path_exists("./"), true);
+    }
+
+    #[test]
+    fn bad_path() {
+        assert_eq!(path_exists("./sadsad/"), false);
+    }
+}
+
+pub fn get_repo(path: &str) {
+    //let options = RepoCheckoutAtOptions {
+    //    mode: RepoCheckoutMode::User,
+    //    overwrite_mode: RepoCheckoutOverwriteMode::UnionIdentical,
+    //    process_whiteouts: true,
+    //    bareuseronly_dirs: true,
+    //    no_copy_fallback: true,
+    //
+    //    force_copy: true,
+    //    enable_uncompressed_cache: false,
+    //    enable_fsync: false,
+    //    force_copy_zerosized: false,
+    //    subpath: None,
+    //    devino_to_csum_cache: None,
+    //    filter: None,
+    //    sepolicy: None,
+    //    sepolicy_prefix: None,
+    //};
+    //let o: Option<&RepoCheckoutAtOptions> = Some(&options);
+    //let options = ostree::RepoCheckoutAtOptions {
+    //    mode: 
+    //}
+    if !path_exists(path) {
+        &ostree::Repo::create_at(libc::AT_FDCWD, path, RepoMode::BareUserOnly,None,gio::NONE_CANCELLABLE).unwrap();
+    }
+    let repo = &ostree::Repo::new_for_path(path);
+    &ostree::Repo::open(repo, gio::NONE_CANCELLABLE);   
+    
+}
+ 
 // (Full example with detailed comments in examples/01d_quick_example.rs)
 //
 // This example demonstrates clap's full 'custom derive' style of creating arguments which is the
@@ -39,7 +90,8 @@ pub(crate) struct ConfigData {
 #[tokio::main]
 async fn main() -> Result<(),()> {
     let opts: Opts = Opts::parse();
-
+    get_repo("./download");
+    get_repo("./download1");
     // Gets a value for config if supplied by user, or defaults to "default.conf"
     println!("Value for config: {}", opts.config);
 
@@ -82,6 +134,9 @@ async fn main() -> Result<(),()> {
     println!("{:?}", hawkbit_url_port);
     println!("{:?}", log_level);
     // more program logic goes here...
+
+    //let _repo = &ostree::Repo::checkout_at(&repo, o, libc::AT_FDCWD, "./download/", "init", gio::NONE_CANCELLABLE);
+
 
     let hostname = format!("http://{}:{}", server_host_name, hawkbit_url_port);
     let ddi = Client::new(&hostname, &tenant_id, &target_name, &auth_token).unwrap();
@@ -128,7 +183,6 @@ async fn main() -> Result<(),()> {
                 artifact.check_sha256().await?;
             }
 
-            //let repo = &ostree::Repo::open_at(libc::AT_FDCWD, "./download/", gio::NONE_CANCELLABLE)?;
 
             update
                 .send_feedback(Execution::Closed, Finished::Success, vec![])
