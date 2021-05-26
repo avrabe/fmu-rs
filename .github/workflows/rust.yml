@@ -81,6 +81,8 @@ jobs:
           toolchain: stable
           override: true
       - uses: Swatinem/rust-cache@v1
+      - name: Build
+        run: cargo build --verbose
       - name: Run cargo-tarpaulin
         uses: actions-rs/tarpaulin@v0.1
         with:
