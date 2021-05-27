@@ -6,7 +6,6 @@ use hawkbit::ddi::{Client, Execution, Finished};
 use ini::Ini;
 use serde::Serialize;
 use tokio::time::sleep;
-use std::path::Path;
 
 use std::fs;
 
@@ -90,8 +89,7 @@ pub(crate) struct ConfigData {
 #[tokio::main]
 async fn main() -> Result<(),()> {
     let opts: Opts = Opts::parse();
-    get_repo("./download");
-    get_repo("./download1");
+
     // Gets a value for config if supplied by user, or defaults to "default.conf"
     println!("Value for config: {}", opts.config);
 
@@ -170,18 +168,22 @@ async fn main() -> Result<(),()> {
                 .send_feedback(Execution::Proceeding, Finished::None, vec!["Downloading"])
                 .await.expect("ff");
 
-            let artifacts = update.download(Path::new("./download/")).await.expect("kkkk");
-            dbg!(&artifacts);
-
-            #[cfg(feature = "hash-digest")]
-            for artifact in artifacts {
-                #[cfg(feature = "hash-md5")]
-                artifact.check_md5().await?;
-                #[cfg(feature = "hash-sha1")]
-                artifact.check_sha1().await?;
-                #[cfg(feature = "hash-sha256")]
-                artifact.check_sha256().await?;
+            for chunk in update.chunks() {
+                print!("Retrieving {}\n", chunk.name());
+                get_repo(chunk.name());
             }
+            //let artifacts = update.download(Path::new("./download/")).await.expect("kkkk");
+            //dbg!(&artifacts);
+
+            //#[cfg(feature = "hash-digest")]
+            //for artifact in artifacts {
+            //    #[cfg(feature = "hash-md5")]
+            //    artifact.check_md5().await?;
+            //    #[cfg(feature = "hash-sha1")]
+            //    artifact.check_sha1().await?;
+            //    #[cfg(feature = "hash-sha256")]
+            //    artifact.check_sha256().await?;
+            //}
 
 
             update
