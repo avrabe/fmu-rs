@@ -82,6 +82,8 @@ jobs:
           ./configure 
           make -j 10
           sudo make install
+          cd ..
+          rm -rf ostree
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
