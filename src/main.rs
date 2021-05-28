@@ -1,9 +1,9 @@
 extern crate clap;
 extern crate hawkbit;
 extern crate ini;
-use ostree::{RepoMode};
 use hawkbit::ddi::{Client, Execution, Finished};
-use ini::Ini;
+use ini::{Ini, Properties};
+use ostree::RepoMode;
 use serde::Serialize;
 use tokio::time::sleep;
 
@@ -27,7 +27,14 @@ mod tests {
         assert_eq!(path_exists("./sadsad/"), false);
     }
 }
+pub fn get_ini_string(section: &Properties, name: &str) -> String {
+    section.get(name).unwrap().to_string()
+}
 
+
+pub fn get_ini_bool(section: &Properties, name: &str) -> bool {
+    section.get(name).unwrap().parse().unwrap()
+}
 pub fn get_repo(path: &str) {
     //let options = RepoCheckoutAtOptions {
     //    mode: RepoCheckoutMode::User,
@@ -48,16 +55,21 @@ pub fn get_repo(path: &str) {
     //};
     //let o: Option<&RepoCheckoutAtOptions> = Some(&options);
     //let options = ostree::RepoCheckoutAtOptions {
-    //    mode: 
+    //    mode:
     //}
     if !path_exists(path) {
-        &ostree::Repo::create_at(libc::AT_FDCWD, path, RepoMode::BareUserOnly,None,gio::NONE_CANCELLABLE).unwrap();
+        &ostree::Repo::create_at(
+            libc::AT_FDCWD,
+            path,
+            RepoMode::BareUserOnly,
+            None,
+            gio::NONE_CANCELLABLE,
+        )
+        .unwrap();
     }
     let repo = &ostree::Repo::new_for_path(path);
-    &ostree::Repo::open(repo, gio::NONE_CANCELLABLE);   
-    
+    &ostree::Repo::open(repo, gio::NONE_CANCELLABLE);
 }
- 
 // (Full example with detailed comments in examples/01d_quick_example.rs)
 //
 // This example demonstrates clap's full 'custom derive' style of creating arguments which is the
@@ -78,16 +90,36 @@ struct Opts {
     verbose: i32,
 }
 
-
 #[derive(Debug, Serialize)]
 pub(crate) struct ConfigData {
     #[serde(rename = "HwRevision")]
     hw_revision: String,
 }
 
+#[derive(Debug)]
+struct HawkbitOpts {
+    hostname: String,
+    ssl: bool,
+    tenant_id: String,
+    target_name: String,
+    auth_token: String,
+    hawkbit_vendor_name: String,
+    log_level: String,
+}
+
+#[derive(Debug)]
+struct OstreeOpts {
+    ostree_name_remote: String,
+    ostree_gpg_verify: bool,
+    ostree_ssl: bool,
+    ostree_url_port: String,
+    ostreepush_ssh_port: String,
+    ostreepush_ssh_user: String,
+    ostreepush_ssh_pwd: String,
+}
 
 #[tokio::main]
-async fn main() -> Result<(),()> {
+async fn main() -> Result<(), ()> {
     let opts: Opts = Opts::parse();
 
     // Gets a value for config if supplied by user, or defaults to "default.conf"
@@ -104,40 +136,45 @@ async fn main() -> Result<(),()> {
 
     let conf = Ini::load_from_file(opts.config).unwrap();
 
-    let server_host_name = conf
-        .section(Some("server"))
-        .unwrap()
-        .get("server_host_name")
-        .unwrap();
-    let section = conf.section(Some("client")).unwrap();
-    let hawkbit_vendor_name = section.get("hawkbit_vendor_name").unwrap();
-    let hawkbit_url_port = section.get("hawkbit_url_port").unwrap();
-    let ssl = section.get("hawkbit_ssl").unwrap().parse::<bool>().unwrap();
-    let tenant_id = section.get("hawkbit_tenant_id").unwrap();
-    let target_name = section.get("hawkbit_target_name").unwrap();
-    let auth_token = section.get("hawkbit_auth_token").unwrap();
-    let log_level = section
-        .get("log_level")
-        .unwrap()
-        .parse::<log::Level>()
-        .unwrap();
-    //let foo: Ipv4Addr = tommy.parse::<Ipv4Addr>().unwrap();
+    let section = conf.section(Some("server")).unwrap();
+    let server_host_name = get_ini_string(section, "server_host_name");
 
-    println!("{:?}", server_host_name);
-    println!("{:?}", ssl);
-    println!("{:?}", tenant_id);
-    println!("{:?}", target_name);
-    println!("{:?}", auth_token);
-    println!("{:?}", hawkbit_vendor_name);
-    println!("{:?}", hawkbit_url_port);
-    println!("{:?}", log_level);
+    let section = conf.section(Some("client")).unwrap();
+    let hawkbit_url_port = get_ini_string(section, "hawkbit_url_port");
+
+    let hawkbit_opts: HawkbitOpts = HawkbitOpts {
+        hawkbit_vendor_name: get_ini_string(section, "hawkbit_vendor_name"),
+        ssl: get_ini_bool(section, "hawkbit_ssl"),
+        tenant_id: get_ini_string(section, "hawkbit_tenant_id"),
+        target_name: get_ini_string(section, "hawkbit_target_name"),
+        auth_token: get_ini_string(section, "hawkbit_auth_token"),
+        log_level: get_ini_string(section, "log_level"),
+        hostname: format!("http://{}:{}", server_host_name, hawkbit_url_port),
+    };
+    println!("{:?}", hawkbit_opts);
+
+    let section = conf.section(Some("ostree")).unwrap();
+    let ostree_opts: OstreeOpts = OstreeOpts {
+        ostree_name_remote: get_ini_string(section, "ostree_name_remote"),
+        ostree_gpg_verify: get_ini_bool(section, "ostree_gpg-verify"),
+        ostree_ssl: get_ini_bool(section, "ostree_ssl"),
+        ostree_url_port: get_ini_string(section, "ostree_url_port"),
+        ostreepush_ssh_user: get_ini_string(section, "ostreepush_ssh_user"),
+        ostreepush_ssh_pwd: get_ini_string(section, "ostreepush_ssh_pwd"),
+        ostreepush_ssh_port: get_ini_string(section, "ostreepush_ssh_port"),
+    };
+    println!("{:?}", ostree_opts);
     // more program logic goes here...
 
     //let _repo = &ostree::Repo::checkout_at(&repo, o, libc::AT_FDCWD, "./download/", "init", gio::NONE_CANCELLABLE);
 
-
-    let hostname = format!("http://{}:{}", server_host_name, hawkbit_url_port);
-    let ddi = Client::new(&hostname, &tenant_id, &target_name, &auth_token).unwrap();
+    let ddi = Client::new(
+        &hawkbit_opts.hostname,
+        &hawkbit_opts.tenant_id,
+        &hawkbit_opts.target_name,
+        &hawkbit_opts.auth_token,
+    )
+    .unwrap();
     loop {
         let reply = ddi.poll().await.expect("buh");
         dbg!(&reply);
@@ -150,7 +187,8 @@ async fn main() -> Result<(),()> {
 
             request
                 .upload(Execution::Closed, Finished::Success, None, data, vec![])
-                .await.expect("foo");
+                .await
+                .expect("foo");
         }
 
         if let Some(update) = reply.update() {
@@ -160,13 +198,13 @@ async fn main() -> Result<(),()> {
             let update = match update {
                 Ok(update) => update,
                 Err(error) => panic!("Problem opening the file: {:?}", error),
-        
             };
             dbg!(&update);
 
             update
                 .send_feedback(Execution::Proceeding, Finished::None, vec!["Downloading"])
-                .await.expect("ff");
+                .await
+                .expect("ff");
 
             for chunk in update.chunks() {
                 print!("Retrieving {}\n", chunk.name());
@@ -185,10 +223,10 @@ async fn main() -> Result<(),()> {
             //    artifact.check_sha256().await?;
             //}
 
-
             update
                 .send_feedback(Execution::Closed, Finished::Success, vec![])
-                .await.expect("fff");
+                .await
+                .expect("fff");
         }
 
         let t = reply.polling_sleep().expect("fff");
