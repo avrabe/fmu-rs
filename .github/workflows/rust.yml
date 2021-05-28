@@ -10,7 +10,6 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-
   build-rust:
     runs-on: ubuntu-latest
     steps:
@@ -64,43 +63,43 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           
-  coverity-check:
-    name: codecov-check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-      - name: install ostree from source (same version as specified in Cargo.toml)
-        run: |
-          curl -L https://github.com/mozilla/grcov/releases/latest/download/grcov-linux-x86_64.tar.bz2 | tar jxf -
-          sudo apt-get update
-          sudo apt-get install build-essential pkg-config e2fslibs-dev libgpgme-dev libfuse-dev
-          git clone --depth 1 --branch v2020.4 https://github.com/ostreedev/ostree.git ostree
-          cd ostree
-          git submodule update --init
-          env NOCONFIGURE=1 ./autogen.sh
-          ./configure 
-          make -j 10
-          sudo make install
-          cd ..
-          rm -rf ostree
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - name: Run cargo-tarpaulin
-        uses: actions-rs/tarpaulin@v0.1
-        with:
-          version: '0.15.0'
-          args: '-- --test-threads 1'
-
-      - name: Upload to codecov.io
-        uses: codecov/codecov-action@v1.0.2
-        with:
-          token: ${{secrets.CODECOV_TOKEN}}
-
-      - name: Archive code coverage results
-        uses: actions/upload-artifact@v1
-        with:
-          name: code-coverage-report
-          path: cobertura.xml
+  #coverity-check:
+  #  name: codecov-check
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    - name: Checkout repository
+  #      uses: actions/checkout@v2
+  #    - name: install ostree from source (same version as specified in Cargo.toml)
+  #      run: |
+  #        curl -L https://github.com/mozilla/grcov/releases/latest/download/grcov-linux-x86_64.tar.bz2 | tar jxf -
+  #        sudo apt-get update
+  #        sudo apt-get install build-essential pkg-config e2fslibs-dev libgpgme-dev libfuse-dev
+  #        git clone --depth 1 --branch v2020.4 https://github.com/ostreedev/ostree.git ostree
+  #        cd ostree
+  #        git submodule update --init
+  #        env NOCONFIGURE=1 ./autogen.sh
+  #        ./configure 
+  #        make -j 10
+  #        sudo make install
+  #        cd ..
+  #        rm -rf ostree
+  #    - uses: actions-rs/toolchain@v1
+  #      with:
+  #        toolchain: stable
+  #        override: true
+  #    - name: Run cargo-tarpaulin
+  #      uses: actions-rs/tarpaulin@v0.1
+  #      with:
+  #        version: '0.15.0'
+  #        args: '-- --test-threads 1'
+  #
+  #    - name: Upload to codecov.io
+  #      uses: codecov/codecov-action@v1.0.2
+  #      with:
+  #        token: ${{secrets.CODECOV_TOKEN}}
+  #
+  #    - name: Archive code coverage results
+  #      uses: actions/upload-artifact@v1
+  #      with:
+  #        name: code-coverage-report
+  #        path: cobertura.xml
