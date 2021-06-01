@@ -36,7 +36,7 @@ pub fn get_ini_string(section: &Properties, name: &str) -> String {
 pub fn get_ini_bool(section: &Properties, name: &str) -> bool {
     section.get(name).unwrap().parse().unwrap()
 }
-pub fn get_repo(path: &str) {
+pub fn get_repo(path: &str) -> ostree::Repo  {
     //let options = RepoCheckoutAtOptions {
     //    mode: RepoCheckoutMode::User,
     //    overwrite_mode: RepoCheckoutOverwriteMode::UnionIdentical,
@@ -59,6 +59,7 @@ pub fn get_repo(path: &str) {
     //    mode:
     //}
     if !path_exists(path) {
+        info!("Create new repo at {}", path);
         &ostree::Repo::create_at(
             libc::AT_FDCWD,
             path,
@@ -68,8 +69,9 @@ pub fn get_repo(path: &str) {
         )
         .unwrap();
     }
-    let repo = &ostree::Repo::new_for_path(path);
-    &ostree::Repo::open(repo, gio::NONE_CANCELLABLE);
+    let repo = ostree::Repo::new_for_path(path);
+    &ostree::Repo::open(&repo, gio::NONE_CANCELLABLE);
+    return repo;
 }
 // (Full example with detailed comments in examples/01d_quick_example.rs)
 //
@@ -125,6 +127,44 @@ pub fn get_log_level(level: &String) -> Level {
         "FATAL" => return Level::ERROR,
         _ => return Level::INFO,
     }
+}
+
+//static PATH_APPS: &str = "/apps";
+static PATH_REPO_APPS: &str = "/apps/ostree_repo";
+
+pub fn init_checkout_existing_containers() {
+
+    // res = True
+    info!("Getting refs from repo:{}",PATH_REPO_APPS);
+    //// self.logger.info("Getting refs from repo:{}".format(PATH_REPO_APPS))
+
+    // try:
+    let repo_container = get_repo(PATH_REPO_APPS);
+    let refs = repo_container.list_refs(None, gio::NONE_CANCELLABLE).unwrap();
+    ////     [_, refs] = self.repo_containers.list_refs(None, None)
+    info!("refs {:#?}", refs);
+    info!("There are {} containers to be started.", refs.keys().len());
+    //     self.logger.info("There are {} containers to be started.".format(len(refs)))
+    //     for ref in refs:
+    //         container_name = ref.split(':')[1]
+    //         if not os.path.isfile(PATH_APPS + '/' + container_name + '/' + VALIDATE_CHECKOUT):
+    //             self.checkout_container(container_name, None)
+    //             self.update_container_ids(container_name)
+    //         if not res:
+    //             self.logger.error("Error when checking out container:{}".format(container_name))
+    //             break
+    //         self.create_unit(container_name)
+    //     self.systemd.Reload()
+    //     for ref in refs:
+    //         container_name = ref.split(':')[1]
+    //         if os.path.isfile(PATH_APPS + '/' + container_name + '/' + FILE_AUTOSTART):
+    //             self.start_unit(container_name)
+    // except (GLib.Error, Exception) as e:
+    //     self.logger.error("Error checking out containers repo ({})".format(e))
+    //     res = False
+    // finally:
+    //     return res
+
 }
 
 #[tokio::main]
@@ -198,7 +238,7 @@ async fn main() {
     };
     info!("{:?}", ostree_opts);
     // more program logic goes here...
-
+    init_checkout_existing_containers();
     //let _repo = &ostree::Repo::checkout_at(&repo, o, libc::AT_FDCWD, "./download/", "init", gio::NONE_CANCELLABLE);
 
     let ddi = Client::new(
