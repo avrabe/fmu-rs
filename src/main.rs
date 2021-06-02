@@ -36,7 +36,7 @@ pub fn get_ini_string(section: &Properties, name: &str) -> String {
 pub fn get_ini_bool(section: &Properties, name: &str) -> bool {
     section.get(name).unwrap().parse().unwrap()
 }
-pub fn get_repo(path: &str) -> ostree::Repo  {
+pub fn get_repo(path: &str) -> ostree::Repo {
     //let options = RepoCheckoutAtOptions {
     //    mode: RepoCheckoutMode::User,
     //    overwrite_mode: RepoCheckoutOverwriteMode::UnionIdentical,
@@ -132,19 +132,20 @@ pub fn get_log_level(level: &String) -> Level {
 //static PATH_APPS: &str = "/apps";
 static PATH_REPO_APPS: &str = "/apps/ostree_repo";
 
-pub fn init_checkout_existing_containers() {
-
+fn init_checkout_existing_containers() {
     // res = True
-    info!("Getting refs from repo:{}",PATH_REPO_APPS);
+    info!("Getting refs from repo:{}", PATH_REPO_APPS);
     //// self.logger.info("Getting refs from repo:{}".format(PATH_REPO_APPS))
 
     // try:
     let repo_container = get_repo(PATH_REPO_APPS);
-    let refs = repo_container.list_refs(None, gio::NONE_CANCELLABLE).unwrap();
+    let refs = repo_container
+        .list_refs(None, gio::NONE_CANCELLABLE)
+        .unwrap();
     ////     [_, refs] = self.repo_containers.list_refs(None, None)
     info!("refs {:#?}", refs);
     info!("There are {} containers to be started.", refs.keys().len());
-    //     self.logger.info("There are {} containers to be started.".format(len(refs)))
+    ////     self.logger.info("There are {} containers to be started.".format(len(refs)))
     //     for ref in refs:
     //         container_name = ref.split(':')[1]
     //         if not os.path.isfile(PATH_APPS + '/' + container_name + '/' + VALIDATE_CHECKOUT):
@@ -164,7 +165,91 @@ pub fn init_checkout_existing_containers() {
     //     res = False
     // finally:
     //     return res
+}
 
+fn init_ostree_remotes(options: &OstreeOpts) -> Result<(), ()> {
+    //// res = True
+    let repo_container = get_repo(PATH_REPO_APPS);
+
+    // self.ostree_remote_attributes = ostree_remote_attributes
+    // opts = GLib.Variant('a{sv}', {'gpg-verify': GLib.Variant('b', ostree_remote_attributes['gpg-verify'])})
+    // try:
+    //     self.logger.info("Initalize remotes for the OS ostree: {}".format(ostree_remote_attributes['name']))
+    //     if not ostree_remote_attributes['name'] in self.repo_os.remote_list():
+    //         self.repo_os.remote_add(ostree_remote_attributes['name'],
+    //                                 ostree_remote_attributes['url'],
+    //                                 opts, None)
+    //     self.remote_name_os = ostree_remote_attributes['name']
+
+    let refs = repo_container
+        .list_refs(None, gio::NONE_CANCELLABLE)
+        .unwrap();
+    //     [_, refs] = self.repo_containers.list_refs(None, None)
+    info!(
+        "Initalize remotes for the containers ostree: {:#?}",
+        refs.keys()
+    );
+    //     self.logger.info("Initalize remotes for the containers ostree: {}".format(refs))
+    //     for ref in refs:
+    //         remote_name = ref.split(':')[0]
+    let remote_list = repo_container.remote_list();
+    let remote_list: Vec<&str> = remote_list.iter().map(|i| i.as_str()).collect();
+    info!("remote_list {:#?}", remote_list);
+
+    //         if remote_name not in self.repo_containers.remote_list():
+    //             self.logger.info("We had the remote: {}".format(remote_name))
+    //             self.repo_containers.remote_add(remote_name,
+    //                                             ostree_remote_attributes['url'],
+    //                                             opts, None)
+
+    // except GLib.Error as e:
+    //     self.logger.error("OSTRee remote initialization failed ({})".format(str(e)))
+    //     res = False
+
+    // return res
+
+    Ok(())
+}
+
+fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result<(), ()> {
+    // """
+    // If the container does not exist, initialize its remote.
+
+    // Parameters:
+    // container_name (str): name of the container
+    // """
+
+    // # returns [('container-hello-world.service', 'description', 'loaded', 'failed', 'failed', '', '/org/freedesktop/systemd1/unit/wtk_2dnodejs_2ddemo_2eservice', 0, '', '/')]
+    // service = self.systemd.ListUnitsByNames([container_name + '.service'])
+
+    // try:
+    //     if (service[0][2] == 'not-found'):
+    //         # New service added, we need to connect to its remote
+    //         opts = GLib.Variant('a{sv}',
+    //                             {'gpg-verify': GLib.Variant('b', self.ostree_remote_attributes['gpg-verify'])})
+    //         # Check if this container was not installed previously
+    let repo_container = get_repo(PATH_REPO_APPS);
+    let remote_list = repo_container.remote_list();
+    let remote_list: Vec<&str> = remote_list.iter().map(|i| i.as_str()).collect();
+    if !remote_list.contains(&container_name.as_str()) {
+        info!(
+            "New container added to the target, we install the remote: {}",
+            container_name
+        );
+        &ostree::Repo::remote_add(
+            &repo_container,
+            container_name.as_ref(),
+            options.hostname.as_ref(),
+            None,
+            gio::NONE_CANCELLABLE,
+        );
+    } else {
+        info!(
+            "New container {} added to the target but the remote already exists, we do nothing",
+            container_name
+        );
+    }
+    Ok(())
 }
 
 #[tokio::main]
@@ -186,7 +271,6 @@ async fn main() {
         get_ini_string(section, "log_level")
     };
 
-
     // a builder for `FmtSubscriber`.
     let subscriber = FmtSubscriber::builder()
         // all spans/events with a level higher than TRACE (e.g, debug, info, warn, etc.)
@@ -195,41 +279,38 @@ async fn main() {
         // completes the builder.
         .finish();
 
-    tracing::subscriber::set_global_default(subscriber)
-        .expect("setting default subscriber failed");
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
     info!("Value for config: {}", opts.config);
     info!("LogLevel: {}", log_level);
 
     let hawkbit_url_port = get_ini_string(section, "hawkbit_url_port");
-    let hawkbit_ssl= get_ini_bool(section, "hawkbit_ssl");
+    let hawkbit_ssl = get_ini_bool(section, "hawkbit_ssl");
 
-    let hawkbit_url_type = if hawkbit_ssl {
-        "https://"
-    } else {
-        "http://"
-    };
+    let hawkbit_url_type = if hawkbit_ssl { "https://" } else { "http://" };
     // setup hawkbit
     let hawkbit_opts: HawkbitOpts = HawkbitOpts {
         hawkbit_vendor_name: get_ini_string(section, "hawkbit_vendor_name"),
         tenant_id: get_ini_string(section, "hawkbit_tenant_id"),
         target_name: get_ini_string(section, "hawkbit_target_name"),
         auth_token: get_ini_string(section, "hawkbit_auth_token"),
-        hostname: format!("{}{}:{}", hawkbit_url_type, server_host_name, hawkbit_url_port),
+        hostname: format!(
+            "{}{}:{}",
+            hawkbit_url_type, server_host_name, hawkbit_url_port
+        ),
     };
     info!("{:?}", hawkbit_opts);
 
     // setup ostree
     let section = conf.section(Some("ostree")).unwrap();
-    let ostree_ssl= get_ini_bool(section, "ostree_ssl");
-    let ostree_url_port= get_ini_string(section, "ostree_url_port");
-    let ostree_url_type = if ostree_ssl {
-        "https://"
-    } else {
-        "http://"
-    };
+    let ostree_ssl = get_ini_bool(section, "ostree_ssl");
+    let ostree_url_port = get_ini_string(section, "ostree_url_port");
+    let ostree_url_type = if ostree_ssl { "https://" } else { "http://" };
 
     let ostree_opts: OstreeOpts = OstreeOpts {
-        hostname: format!("{}{}:{}", ostree_url_type,server_host_name, ostree_url_port),
+        hostname: format!(
+            "{}{}:{}",
+            ostree_url_type, server_host_name, ostree_url_port
+        ),
         ostree_name_remote: get_ini_string(section, "ostree_name_remote"),
         ostree_gpg_verify: get_ini_bool(section, "ostree_gpg-verify"),
         ostreepush_ssh_user: get_ini_string(section, "ostreepush_ssh_user"),
@@ -239,6 +320,8 @@ async fn main() {
     info!("{:?}", ostree_opts);
     // more program logic goes here...
     init_checkout_existing_containers();
+    init_ostree_remotes(&ostree_opts).unwrap();
+    init_container_remote("bar".to_string(), &ostree_opts).unwrap();
     //let _repo = &ostree::Repo::checkout_at(&repo, o, libc::AT_FDCWD, "./download/", "init", gio::NONE_CANCELLABLE);
 
     let ddi = Client::new(
@@ -249,7 +332,7 @@ async fn main() {
     )
     .unwrap();
 
-     loop {
+    loop {
         let reply = ddi.poll().await.expect("buh");
         dbg!(&reply);
 
@@ -294,5 +377,5 @@ async fn main() {
         let t = reply.polling_sleep().expect("fff");
         info!("sleep for {:?}", t);
         sleep(t).await;
-    }; 
+    }
 }
