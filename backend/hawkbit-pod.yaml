@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.22.0 (955b78124)
+  creationTimestamp: null
+  labels:
+    io.kompose.network/hawknet: "true"
+    io.kompose.service: hawkbit
+  name: hawkbit
+spec:
+  containers:
+    - env:
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:mysql://mysql:3306/hawkbit
+        - name: SPRING_DATASOURCE_USERNAME
+          value: root
+        - name: SPRING_RABBITMQ_HOST
+          value: rabbitmq
+        - name: SPRING_RABBITMQ_PASSWORD
+          value: guest
+        - name: SPRING_RABBITMQ_USERNAME
+          value: guest
+      image: hawkbit/hawkbit-update-server:latest-mysql
+      name: hawkbit
+      ports:
+        - containerPort: 8080
+      resources: {}
+  restartPolicy: OnFailure
+status: {}

@@ -9,6 +9,17 @@ fmu_rs is a Rust implementation of FullMetalUpdate which handles update for the 
 It has been created in order to learn Rust by reimplementing an existing project used by the author.
 The program can execute but not update anything yet.
 
+```bash
+sudo update-alternatives --set iptables /usr/sbin/iptables-legacy
+sudo update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+minikube start --driver=podman
+minikube addons enable ingress
+cd backend
+minikube kubectl -- apply -f hawkbit-pod.yaml,hawkbit-service.yaml,hawknet-networkpolicy.yaml,mysql-pod.yaml,mysql-service.yaml,rabbitmq-pod.yaml,rabbitmq-service.yaml
+
+
+```
+
 Needs:
 libostree-dev
 ## License

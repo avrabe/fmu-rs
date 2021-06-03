@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.22.0 (955b78124)
+  creationTimestamp: null
+  labels:
+    io.kompose.network/hawknet: "true"
+    io.kompose.service: mysql
+  name: mysql
+spec:
+  containers:
+    - env:
+        - name: MYSQL_ALLOW_EMPTY_PASSWORD
+          value: "true"
+        - name: MYSQL_DATABASE
+          value: hawkbit
+      image: mysql:5.7
+      name: mysql
+      ports:
+        - containerPort: 3306
+      resources: {}
+  restartPolicy: OnFailure
+status: {}
