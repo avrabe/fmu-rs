@@ -305,11 +305,12 @@ async fn main() {
     let ostree_ssl = get_ini_bool(section, "ostree_ssl");
     let ostree_url_port = get_ini_string(section, "ostree_url_port");
     let ostree_url_type = if ostree_ssl { "https://" } else { "http://" };
+    let ostree_url_prefix = get_ini_string(section, "ostree_url_prefix");
 
     let ostree_opts: OstreeOpts = OstreeOpts {
         hostname: format!(
-            "{}{}:{}",
-            ostree_url_type, server_host_name, ostree_url_port
+            "{}{}:{}/{}",
+            ostree_url_type, server_host_name, ostree_url_port, ostree_url_prefix
         ),
         ostree_name_remote: get_ini_string(section, "ostree_name_remote"),
         ostree_gpg_verify: get_ini_bool(section, "ostree_gpg-verify"),
