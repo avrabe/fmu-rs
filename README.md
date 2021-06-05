@@ -48,6 +48,11 @@ sudo socat TCP-LISTEN:80,fork TCP:$(minikube ip):80 &
 sudo socat TCP-LISTEN:30022,fork TCP:$(minikube ip):30022 &
 ```
 
+And to configure some example id's.
+```bash
+./tools/ConfigServer.sh
+```
+
 # Access
 From the outside
 
