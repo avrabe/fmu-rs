@@ -357,6 +357,7 @@ async fn main() {
                 Ok(update) => update,
                 Err(error) => panic!("Problem opening the file: {:?}", error),
             };
+
             dbg!(&update);
 
             update
@@ -366,6 +367,7 @@ async fn main() {
 
             for chunk in update.chunks() {
                 //info!("Retrieving {}\n", chunk.name());
+                info!("metadata {:#?}", chunk.metadata());
                 get_repo(chunk.name());
             }
 

@@ -486,8 +486,7 @@ dependencies = [
 [[package]]
 name = "hawkbit"
 version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6418dc68e6127d4869f43fe49d47a2f9251116c6b712e9effab2f1b530284643"
+source = "git+https://github.com/avrabe/hawkbit-rs?branch=metadata_support#f5b92c069334b162b59285300f3bd50d9dd9b70d"
 dependencies = [
  "bytes",
  "cfg-if 1.0.0",
