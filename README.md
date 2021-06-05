@@ -4,23 +4,29 @@
 [![codecov](https://codecov.io/gh/avrabe/fmu-rs/branch/main/graph/badge.svg?token=bqz07qp5a3)](https://codecov.io/gh/avrabe/fmu-rs)
 
 
-fmu_rs is a Rust implementation of FullMetalUpdate which handles update for the System on which it is running.
+fmu-rs is a Rust implementation of FullMetalUpdate which handles update for the System on which it is running.
 
 It has been created in order to learn Rust by reimplementing an existing project used by the author.
 The program can execute but not update anything yet.
 
+# Building the application
+On Ubuntu 20.04 install rust and the needed external dependencies (libostree)
 ```bash
-sudo update-alternatives --set iptables /usr/sbin/iptables-legacy
-sudo update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
-minikube start --driver=podman
-minikube addons enable ingress
-cd backend
-minikube kubectl -- apply -f hawkbit-pod.yaml,hawkbit-service.yaml,hawknet-networkpolicy.yaml,mysql-pod.yaml,mysql-service.yaml,rabbitmq-pod.yaml,rabbitmq-service.yaml
+sudo apt-get install build-essential libostree-dev 
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
 
-
+Afterwards just build with the regular cargo commands
+```bash
+cd fmu-rs
+cargo check
+cargo build
+cargo run
 ```
 
 
+# Setting up the server
+For example install an ubuntu 20.04 Server with following additional applications.
 ```bash
 sudo apt-get install docker.io socat 
 sudo useradd -a -G docker $USER
@@ -28,16 +34,27 @@ curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-
 sudo install minikube-linux-amd64 /usr/local/bin/minikube
 ```
 
+Start the kubernetes engine and ensure it is configured properly.
 ```bash
 minikube start --driver=docker
 minikube addons enable ingress
 ```
 
+Then to enforce all the files to setup the needed servers.
 ```bash
 cd fmu-rs
 minikube kubectl -- apply -f backend
 sudo socat TCP-LISTEN:80,fork TCP:$(minikube ip):80
 ```
+
+# Access
+
+| Service / Container | URL | Login |
+|---|---|---|
+| hawkBit Update Server | [http://localhost:80/](http://localhost:80/) | admin:admin | 
+| MySQL | localhost:3306/hawkbit | root |
+| RabbitMQ | [http://localhost:15672](http://localhost:15672) | guest:guest |
+| Ostree Server| [http://localhost:80/ostree](http://localhost:80/ostree) | - |
 
 
 Needs:
