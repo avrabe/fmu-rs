@@ -44,20 +44,26 @@ Then to enforce all the files to setup the needed servers.
 ```bash
 cd fmu-rs
 minikube kubectl -- apply -f backend
-sudo socat TCP-LISTEN:80,fork TCP:$(minikube ip):80
+sudo socat TCP-LISTEN:80,fork TCP:$(minikube ip):80 &
+sudo socat TCP-LISTEN:30022,fork TCP:$(minikube ip):30022 &
 ```
 
 # Access
+From the outside
 
 | Service / Container | URL | Login |
 |---|---|---|
 | hawkBit Update Server | [http://localhost:80/](http://localhost:80/) | admin:admin | 
+| Ostree Server - http| [http://localhost:80/ostree](http://localhost:80/ostree) | - |
+| Ostree Server - ssh| ssh localhost -p 30022 | root:root |
+
+
+Only within the kubernetes cluster
+| Service / Container | URL | Login |
+|---|---|---|
 | MySQL | localhost:3306/hawkbit | root |
 | RabbitMQ | [http://localhost:15672](http://localhost:15672) | guest:guest |
-| Ostree Server| [http://localhost:80/ostree](http://localhost:80/ostree) | - |
 
 
-Needs:
-libostree-dev
 ## License
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Favrabe%2Ffmu-rs.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Favrabe%2Ffmu-rs?ref=badge_large)

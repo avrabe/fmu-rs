@@ -9,10 +9,12 @@ metadata:
     io.kompose.service: ostree
   name: ostree
 spec:
+  type: NodePort
   ports:
     - name: "22"
       port: 22
       targetPort: 22
+      nodePort: 30022
     - name: "8000"
       port: 8000
       targetPort: 8000
