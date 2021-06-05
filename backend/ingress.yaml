@@ -24,3 +24,12 @@ spec:
             name: hawkbit
             port:
               number: 8080
+  - http:
+      paths:
+      - path: /ostree
+        pathType: Prefix
+        backend:
+          service:
+            name: ostree
+            port:
+              number: 8000

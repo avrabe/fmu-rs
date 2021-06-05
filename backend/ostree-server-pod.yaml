@@ -7,17 +7,15 @@ metadata:
   creationTimestamp: null
   labels:
     io.kompose.network/hawknet: "true"
-    io.kompose.service: rabbitmq
-  name: rabbitmq
+    io.kompose.service: ostree
+  name: ostree
 spec:
   containers:
-    - env:
-        - name: RABBITMQ_DEFAULT_VHOST
-          value: /
-      image: rabbitmq:3-management
-      name: rabbitmq
+    - name: ostree
+      image: fullmetalupdate/ostree-server:v1.0
       ports:
-        - containerPort: 15672
-        - containerPort: 5672
+        - containerPort: 22
+        - containerPort: 8000
+      resources: {}
   restartPolicy: OnFailure
 status: {}

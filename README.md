@@ -20,6 +20,26 @@ minikube kubectl -- apply -f hawkbit-pod.yaml,hawkbit-service.yaml,hawknet-netwo
 
 ```
 
+
+```bash
+sudo apt-get install docker.io socat 
+sudo useradd -a -G docker $USER
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+```
+
+```bash
+minikube start --driver=docker
+minikube addons enable ingress
+```
+
+```bash
+cd fmu-rs
+minikube kubectl -- apply -f backend
+sudo socat TCP-LISTEN:80,fork TCP:$(minikube ip):80
+```
+
+
 Needs:
 libostree-dev
 ## License
