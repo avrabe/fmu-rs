@@ -16,5 +16,4 @@ spec:
   selector:
     io.kompose.service: hawkbit
 status:
-  loadBalancer:  {}
-
+  loadBalancer: {}
