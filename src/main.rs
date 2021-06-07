@@ -60,7 +60,7 @@ pub fn get_repo(path: &str) -> ostree::Repo {
     //}
     if !path_exists(path) {
         info!("Create new repo at {}", path);
-        &ostree::Repo::create_at(
+        ostree::Repo::create_at(
             libc::AT_FDCWD,
             path,
             RepoMode::BareUserOnly,
@@ -70,8 +70,8 @@ pub fn get_repo(path: &str) -> ostree::Repo {
         .unwrap();
     }
     let repo = ostree::Repo::new_for_path(path);
-    &ostree::Repo::open(&repo, gio::NONE_CANCELLABLE);
-    return repo;
+    ostree::Repo::open(&repo, gio::NONE_CANCELLABLE).unwrap();
+    repo
 }
 // (Full example with detailed comments in examples/01d_quick_example.rs)
 //
@@ -118,14 +118,14 @@ struct OstreeOpts {
     ostreepush_ssh_pwd: String,
 }
 
-pub fn get_log_level(level: &String) -> Level {
+pub fn get_log_level(level: &str) -> Level {
     match level.to_uppercase().as_ref() {
-        "DEBUG" => return Level::DEBUG,
-        "INFO" => return Level::INFO,
-        "WARN" => return Level::WARN,
-        "ERROR" => return Level::ERROR,
-        "FATAL" => return Level::ERROR,
-        _ => return Level::INFO,
+        "DEBUG" => Level::DEBUG,
+        "INFO" => Level::INFO,
+        "WARN" => Level::WARN,
+        "ERROR" => Level::ERROR,
+        "FATAL" => Level::ERROR,
+        _ => Level::INFO,
     }
 }
 
@@ -236,13 +236,14 @@ fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result
             "New container added to the target, we install the remote: {}",
             container_name
         );
-        &ostree::Repo::remote_add(
+        ostree::Repo::remote_add(
             &repo_container,
             container_name.as_ref(),
             options.hostname.as_ref(),
             None,
             gio::NONE_CANCELLABLE,
-        );
+        )
+        .unwrap();
     } else {
         info!(
             "New container {} added to the target but the remote already exists, we do nothing",
