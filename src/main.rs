@@ -109,6 +109,14 @@ struct HawkbitOpts {
 }
 
 #[derive(Debug)]
+struct ChunkMetaData {
+    rev: String,
+    autostart: bool,
+    autoremove: bool,
+    notify: bool,
+    timeout: u32,
+}
+#[derive(Debug)]
 struct OstreeOpts {
     hostname: String,
     ostree_name_remote: String,
@@ -167,7 +175,7 @@ fn init_checkout_existing_containers() {
     //     return res
 }
 
-fn init_ostree_remotes(options: &OstreeOpts) -> Result<(), ()> {
+fn init_ostree_remotes(_options: &OstreeOpts) -> Result<(), ()> {
     //// res = True
     let repo_container = get_repo(PATH_REPO_APPS);
 
@@ -367,8 +375,31 @@ async fn main() {
                 .expect("ff");
 
             for chunk in update.chunks() {
-                //info!("Retrieving {}\n", chunk.name());
-                info!("metadata {:#?}", chunk.metadata());
+                info!("Retrieving {}\n", chunk.name());
+                let mut rev: String = "unknown".to_string();
+                let mut autostart: bool = false;
+                let mut autoremove: bool = false;
+                let mut notify: bool = false;
+                let mut timeout: u32 = 0;
+
+                for metadata in chunk.metadata() {
+                    match metadata {
+                        ("rev", _) => rev = metadata.1.to_string(),
+                        ("autostart", _) => autostart = metadata.1 == "1",
+                        ("autoremove", _) => autoremove = metadata.1 == "1",
+                        ("notify", _) => notify = metadata.1 == "1",
+                        ("timeout", _) => timeout = metadata.1.parse().unwrap(),
+                        (_, _) => info!("unknown metadata {:#?}", metadata),
+                    }
+                }
+                let chunk_meta_data: ChunkMetaData = ChunkMetaData {
+                    rev,
+                    autostart,
+                    autoremove,
+                    notify,
+                    timeout,
+                };
+                info!("metadata: {:#?}", chunk_meta_data);
                 get_repo(chunk.name());
             }
 
