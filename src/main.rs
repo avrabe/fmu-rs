@@ -1,6 +1,7 @@
 extern crate clap;
 extern crate hawkbit;
 extern crate ini;
+use clap::{AppSettings, Clap};
 use gio::NONE_CANCELLABLE;
 use glib::prelude::*; // or `use gtk::prelude::*;`
 use glib::VariantDict;
@@ -77,11 +78,6 @@ pub fn get_repo(path: &str) -> ostree::Repo {
     ostree::Repo::open(&repo, gio::NONE_CANCELLABLE).unwrap();
     repo
 }
-// (Full example with detailed comments in examples/01d_quick_example.rs)
-//
-// This example demonstrates clap's full 'custom derive' style of creating arguments which is the
-// simplest method of use, but sacrifices some flexibility.
-use clap::{AppSettings, Clap};
 
 /// This doc string acts as a help message when the user runs '--help'
 /// as do all doc strings on fields
@@ -178,7 +174,7 @@ fn init_checkout_existing_containers() {
     //     return res
 }
 
-fn init_ostree_remotes(_options: &OstreeOpts) -> Result<(), ()> {
+fn init_ostree_remotes(options: &OstreeOpts) -> Result<(), ()> {
     //// res = True
     let repo_container = get_repo(PATH_REPO_APPS);
 
@@ -206,6 +202,20 @@ fn init_ostree_remotes(_options: &OstreeOpts) -> Result<(), ()> {
     let remote_list = repo_container.remote_list();
     let remote_list: Vec<&str> = remote_list.iter().map(|i| i.as_str()).collect();
     info!("remote_list {:#?}", remote_list);
+    for remote in remote_list.iter() {
+        let url = repo_container.remote_get_url(remote).unwrap();
+        let url = url.as_str();
+        info!("remote: {:#?} url: {:#?}", remote, url);
+        if options.hostname == url {
+            info!("reusing remote: {:#?} url: {:#?}", remote, url);
+            // TODO ^ Try deleting the & and matching just "Ferris"
+        } else {
+            info!(
+                "For remote {}, {} was expected and {} was received",
+                remote, options.hostname, url
+            );
+        }
+    }
 
     //         if remote_name not in self.repo_containers.remote_list():
     //             self.logger.info("We had the remote: {}".format(remote_name))
