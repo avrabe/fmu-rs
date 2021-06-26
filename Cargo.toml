@@ -17,10 +17,7 @@ hawkbit = { version = "0.4.0", features= ["hash-digest", "hash-md5", "hash-sha1"
 tokio = {version="1.6.0", features= ["full"]}
 serde = "1.0.126"
 libc = "0.2.92"
-#ostree = { version = "0.11.0", features = ["v2020_2"]}
-#gio = "0.9.1"
-#glib = "0.10.3"
-ostree = {git = "https://github.com/ostreedev/ostree-rs.git", branch="main", features = ["v2020_2"]}
-glib = {git = "https://github.com/gtk-rs/gtk-rs-core.git", branch="master", package = "glib", features = ["v2_64"]}
-gio = {git = "https://github.com/gtk-rs/gtk-rs-core.git", branch="master", package = "gio", features = ["v2_64"]}
-
+ostree = { version = "0.11.0", features = ["v2021_2"]}
+ostree-ext = {git = "https://github.com/ostreedev/ostree-rs-ext.git", branch="main"}
+gio = "0.9.1"
+glib = "0.10.3"

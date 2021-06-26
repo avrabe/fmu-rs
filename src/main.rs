@@ -1,12 +1,13 @@
 extern crate clap;
 extern crate hawkbit;
 extern crate ini;
-use glib;
+use gio::NONE_CANCELLABLE;
 use glib::prelude::*; // or `use gtk::prelude::*;`
 use glib::VariantDict;
 use hawkbit::ddi::{Client, Execution, Finished};
 use ini::{Ini, Properties};
 use ostree::RepoMode;
+use ostree_ext::variant_utils;
 use serde::Serialize;
 use std::fs;
 use tokio::time::sleep;
@@ -60,6 +61,7 @@ pub fn get_repo(path: &str) -> ostree::Repo {
     //let options = ostree::RepoCheckoutAtOptions {
     //    mode:
     //}
+
     if !path_exists(path) {
         info!("Create new repo at {}", path);
         ostree::Repo::create_at(
@@ -67,7 +69,7 @@ pub fn get_repo(path: &str) -> ostree::Repo {
             path,
             RepoMode::BareUserOnly,
             None,
-            None::<&gio::Cancellable>,
+            gio::NONE_CANCELLABLE,
         )
         .unwrap();
     }
@@ -150,9 +152,7 @@ fn init_checkout_existing_containers() {
 
     // try:
     let repo_container = get_repo(PATH_REPO_APPS);
-    let refs = repo_container
-        .list_refs(None, gio::NONE_CANCELLABLE)
-        .unwrap();
+    let refs = repo_container.list_refs(None, NONE_CANCELLABLE).unwrap();
     ////     [_, refs] = self.repo_containers.list_refs(None, None)
     info!("refs {:#?}", refs);
     info!("There are {} containers to be started.", refs.keys().len());
@@ -264,7 +264,7 @@ fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result
     Ok(())
 }
 
-fn pull_ostree_ref(is_container: bool, metadata: ChunkMetaData, name: &str) {
+fn pull_ostree_ref(_is_container: bool, metadata: ChunkMetaData, name: &str) {
     let progress = ostree::AsyncProgress::new();
     //progress.connect("changed", true, {});
     //ostree::AsyncProgress::connect(&progress, "changed", ostree::Repo::pull_default_console_progress_changed, None);
@@ -278,13 +278,16 @@ fn pull_ostree_ref(is_container: bool, metadata: ChunkMetaData, name: &str) {
     //res = repo.pull_with_options(ref_name, opts, progress, None)
     //progress.finish()
     // For options see: https://lazka.github.io/pgi-docs/OSTree-1.0/classes/Repo.html#OSTree.Repo.pull_with_options
-    let mut options = VariantDict::default();
+    let options = VariantDict::default();
     let flags = ostree::RepoPullFlags::NONE;
     let flags = flags.bits() as i32;
     let flags = flags.to_variant();
     options.insert_value("flags", &flags);
     let depth = OSTREE_DEPTH.to_variant();
     options.insert_value("depth", &depth);
+    let refs: &str = &metadata.rev;
+    let array = variant_utils::new_variant_as(&[refs]);
+    options.insert_value("refs", &array);
     let options = options.end();
 
     //self.logger.info("Upgrader pulled {} from OSTree repo ({})".format(ref_name, ref_sha))
@@ -292,8 +295,10 @@ fn pull_ostree_ref(is_container: bool, metadata: ChunkMetaData, name: &str) {
     //"refs": glib::Variant("as", (ref_sha,)),
     //"depth": glib::Variant("i", OSTREE_DEPTH)});
 
-    //let repo_container = get_repo(PATH_REPO_APPS);
-    //repo_container.pull_with_options(name, &options, progress, gio::NONE_CANCELLABLE );
+    let repo_container = get_repo(PATH_REPO_APPS);
+    repo_container
+        .pull_with_options(name, &options, Some(&progress), gio::NONE_CANCELLABLE)
+        .unwrap();
 }
 
 fn update_container(name: &str, metadata: ChunkMetaData, options: &OstreeOpts) {
