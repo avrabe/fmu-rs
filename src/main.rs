@@ -270,7 +270,7 @@ fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result
             .remote_get_url(container_name.as_str())
             .unwrap();
         let url = url.as_str();
-        if options.hostname == container_name {
+        if options.hostname == url {
             info!(
                 "reusing remote: {:#?} url: {:#?}",
                 &container_name.as_str(),
