@@ -266,10 +266,41 @@ fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result
         )
         .unwrap();
     } else {
-        info!(
-            "New container {} added to the target but the remote already exists, we do nothing",
-            container_name
-        );
+        let url = repo_container
+            .remote_get_url(container_name.as_str())
+            .unwrap();
+        let url = url.as_str();
+        if options.hostname == container_name {
+            info!(
+                "reusing remote: {:#?} url: {:#?}",
+                &container_name.as_str(),
+                url
+            );
+            // TODO ^ Try deleting the & and matching just "Ferris"
+        } else {
+            info!(
+                "For remote {}, {} was expected and {} was received. Replace it.",
+                container_name, options.hostname, url
+            );
+            ostree::Repo::remote_delete(
+                &repo_container,
+                container_name.as_ref(),
+                gio::NONE_CANCELLABLE,
+            )
+            .unwrap();
+            ostree::Repo::remote_add(
+                &repo_container,
+                container_name.as_ref(),
+                options.hostname.as_ref(),
+                None,
+                gio::NONE_CANCELLABLE,
+            )
+            .unwrap();
+            info!(
+                "Changed url for remote {} to {}.",
+                container_name, options.hostname
+            );
+        }
     }
     Ok(())
 }
