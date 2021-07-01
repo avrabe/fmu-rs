@@ -107,6 +107,7 @@ jobs:
       - name: Checkout tools repo
         uses: actions/checkout@v2
         with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           repository: avrabe/meta-fmu
           path: meta-fmu
       - name: copy and commit the recipe
