@@ -98,11 +98,29 @@ jobs:
           rm -rf ostree
           cargo install cargo-bitbake --locked
           cargo bitbake
+          mv fmu_rs_0.1.0.bb fmu-rs_0.1.0.bb
       - name: Archive code coverage results
         uses: actions/upload-artifact@v1
         with:
           name: bitbake file
-          path: fmu_rs_0.1.0.bb
+          path: fmu-rs_0.1.0.bb
+      - name: Checkout tools repo
+        uses: actions/checkout@v2
+        with:
+          repository: avrabe/meta-fmu
+          path: meta-fmu
+      - name: copy and commit the recipe
+        run: |
+          cp fmu-rs_0.1.0.bb meta-fmu/recipes-application/fmu/
+          cd meta-fmu
+          git config user.name 'fmubot'
+          git config user.email 'fmubot@users.noreply.github.com'
+          git add -A
+          git commit -m "Add new revision"
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+           path: meta-fmu
 
   sonarcloud:
     name: SonarCloud
