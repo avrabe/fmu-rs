@@ -104,7 +104,7 @@ jobs:
         with:
           name: bitbake file
           path: fmu-rs_0.1.0.bb
-      - name: Checkout tools repo
+      - name: Checkout meta-fmu
         uses: actions/checkout@v2
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
