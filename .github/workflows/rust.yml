@@ -121,6 +121,7 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
+           token:  ${{ secrets.FMU_TOKEN }}
            path: meta-fmu
 
   sonarcloud:
