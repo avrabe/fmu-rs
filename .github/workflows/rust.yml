@@ -122,6 +122,7 @@ jobs:
         uses: peter-evans/create-pull-request@v3
         with:
            token:  ${{ secrets.FMU_TOKEN }}
+           delete-branch: true
            path: meta-fmu
 
   sonarcloud:
