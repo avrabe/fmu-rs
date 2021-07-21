@@ -7,6 +7,7 @@ use glib::prelude::*; // or `use gtk::prelude::*;`
 use glib::VariantDict;
 use hawkbit::ddi::{Client, Execution, Finished};
 use ini::{Ini, Properties};
+use ostree::AsyncProgressExt;
 use ostree::RepoMode;
 use ostree_ext::variant_utils;
 use serde::Serialize;
@@ -110,7 +111,7 @@ struct HawkbitOpts {
 
 #[derive(Debug)]
 struct ChunkMetaData {
-    rev: String,
+    rev: Option<String>,
     autostart: bool,
     autoremove: bool,
     notify: bool,
@@ -306,18 +307,17 @@ fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result
 }
 
 fn pull_ostree_ref(_is_container: bool, metadata: ChunkMetaData, name: &str) {
+    let rev = {
+        match metadata.rev {
+            None => return,
+            Some(string) => string,
+        }
+    };
     let progress = ostree::AsyncProgress::new();
-    //progress.connect("changed", true, {});
-    //ostree::AsyncProgress::connect(&progress, "changed", ostree::Repo::pull_default_console_progress_changed, None);
+    //TBD: Currently the default function pull_default_console_progress_changed
+    //     is not available fro ostree-rs. Don't use it for now.
+    //progress.connect("changed", true, ostree::Repo::pull_default_console_progress_changed());
 
-    //connect('changed', OSTree.Repo.pull_default_console_progress_changed, None)
-
-    //  opts = GLib.Variant('a{sv}', {'flags': GLib.Variant('i', OSTree.RepoPullFlags.NONE),
-    //    'refs': GLib.Variant('as', (ref_sha,)),
-    //    'depth': GLib.Variant('i', OSTREE_DEPTH)})
-    //self.logger.info("Pulling remote {} from OSTree repo ({})".format(ref_name, ref_sha))
-    //res = repo.pull_with_options(ref_name, opts, progress, None)
-    //progress.finish()
     // For options see: https://lazka.github.io/pgi-docs/OSTree-1.0/classes/Repo.html#OSTree.Repo.pull_with_options
     let options = VariantDict::default();
     let flags = ostree::RepoPullFlags::NONE;
@@ -326,20 +326,18 @@ fn pull_ostree_ref(_is_container: bool, metadata: ChunkMetaData, name: &str) {
     options.insert_value("flags", &flags);
     let depth = OSTREE_DEPTH.to_variant();
     options.insert_value("depth", &depth);
-    let refs: &str = &metadata.rev;
+    let refs: &str = &rev;
     let array = variant_utils::new_variant_as(&[refs]);
     options.insert_value("refs", &array);
     let options = options.end();
 
-    //self.logger.info("Upgrader pulled {} from OSTree repo ({})".format(ref_name, ref_sha))
-    //let options: glib::Variant = glib::Variant::From("a{sv}", {"flags", glib::Variant("i", OSTree.RepoPullFlags.NONE),
-    //"refs": glib::Variant("as", (ref_sha,)),
-    //"depth": glib::Variant("i", OSTREE_DEPTH)});
-
+    info!("Upgrader pulling {} from OSTree repo ({})", name, refs);
     let repo_container = get_repo(PATH_REPO_APPS);
     repo_container
         .pull_with_options(name, &options, Some(&progress), gio::NONE_CANCELLABLE)
         .unwrap();
+    progress.finish();
+    info!("Upgrader pulled {} from OSTree repo ({})", name, refs);
 }
 
 fn update_container(name: &str, metadata: ChunkMetaData, options: &OstreeOpts) {
@@ -462,7 +460,7 @@ async fn main() {
 
             for chunk in update.chunks() {
                 info!("Retrieving {}\n", chunk.name());
-                let mut rev: String = "unknown".to_string();
+                let mut rev: Option<String> = None;
                 let mut autostart: bool = false;
                 let mut autoremove: bool = false;
                 let mut notify: bool = false;
@@ -470,7 +468,7 @@ async fn main() {
 
                 for metadata in chunk.metadata() {
                     match metadata {
-                        ("rev", _) => rev = metadata.1.to_string(),
+                        ("rev", _) => rev = Some(metadata.1.to_string()),
                         ("autostart", _) => autostart = metadata.1 == "1",
                         ("autoremove", _) => autoremove = metadata.1 == "1",
                         ("notify", _) => notify = metadata.1 == "1",
