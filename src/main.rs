@@ -252,8 +252,11 @@ fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result
     //         # Check if this container was not installed previously
     let repo_container = get_repo(PATH_REPO_APPS);
     let remote_list = repo_container.remote_list();
-    let remote_list: Vec<&str> = remote_list.iter().map(|i| i.as_str()).collect();
-    if !remote_list.contains(&container_name.as_str()) {
+    if !remote_list
+        .iter()
+        .map(|i| i.as_str())
+        .any(|x| x == container_name.as_str())
+    {
         info!(
             "New container added to the target, we install the remote: {}",
             container_name
