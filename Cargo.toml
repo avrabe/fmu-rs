@@ -21,3 +21,4 @@ ostree = { version = "0.11.0", features = ["v2021_2"]}
 ostree-ext = {git = "https://github.com/ostreedev/ostree-rs-ext.git", branch="main"}
 gio = "0.9.1"
 glib = "0.10.3"
+openat = "0.1.21"

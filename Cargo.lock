@@ -309,6 +309,7 @@ dependencies = [
  "glib",
  "hawkbit",
  "libc",
+ "openat",
  "ostree",
  "ostree-ext",
  "rust-ini",

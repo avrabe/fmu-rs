@@ -9,9 +9,11 @@ use hawkbit::ddi::{Client, Execution, Finished};
 use ini::{Ini, Properties};
 use ostree::AsyncProgressExt;
 use ostree::RepoMode;
+use ostree::*;
 use ostree_ext::variant_utils;
 use serde::Serialize;
 use std::fs;
+use std::os::unix::io::AsRawFd;
 use tokio::time::sleep;
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
@@ -138,7 +140,7 @@ pub fn get_log_level(level: &str) -> Level {
     }
 }
 
-//static PATH_APPS: &str = "/apps";
+static PATH_APPS: &str = "/apps";
 static PATH_REPO_APPS: &str = "/apps/ostree_repo";
 static OSTREE_DEPTH: i32 = 1;
 
@@ -309,9 +311,9 @@ fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result
     Ok(())
 }
 
-fn pull_ostree_ref(_is_container: bool, metadata: ChunkMetaData, name: &str) {
+fn pull_ostree_ref(_is_container: bool, metadata: &ChunkMetaData, name: &str) {
     let rev = {
-        match metadata.rev {
+        match &metadata.rev {
             None => return,
             Some(string) => string,
         }
@@ -343,9 +345,42 @@ fn pull_ostree_ref(_is_container: bool, metadata: ChunkMetaData, name: &str) {
     info!("Upgrader pulled {} from OSTree repo ({})", name, refs);
 }
 
+fn checkout_container(metadata: &ChunkMetaData, name: &str) {
+    let rev = {
+        match &metadata.rev {
+            None => return,
+            Some(string) => string,
+        }
+    };
+    // stop systemd units.
+    let options = RepoCheckoutAtOptions {
+        overwrite_mode: RepoCheckoutOverwriteMode::UnionIdentical,
+        process_whiteouts: true,
+        bareuseronly_dirs: true,
+        no_copy_fallback: true,
+        mode: RepoCheckoutMode::User,
+        ..Default::default()
+    };
+    let repo_container = get_repo(PATH_REPO_APPS);
+    let destination_path = format!("{}/{}", PATH_APPS, name);
+    fs::remove_dir_all(&destination_path).unwrap();
+    fs::create_dir_all(&destination_path).unwrap();
+    let dirfd = openat::Dir::open(&destination_path).expect("openat");
+    repo_container
+        .checkout_at(
+            Some(&options),
+            dirfd.as_raw_fd(),
+            destination_path,
+            &rev,
+            gio::NONE_CANCELLABLE,
+        )
+        .unwrap();
+}
+
 fn update_container(name: &str, metadata: ChunkMetaData, options: &OstreeOpts) {
     init_container_remote(name.to_string(), options).unwrap();
-    pull_ostree_ref(true, metadata, name);
+    pull_ostree_ref(true, &metadata, name);
+    checkout_container(&metadata, name);
 }
 
 #[tokio::main]
