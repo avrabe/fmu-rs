@@ -43,29 +43,9 @@ pub fn get_ini_string(section: &Properties, name: &str) -> String {
 pub fn get_ini_bool(section: &Properties, name: &str) -> bool {
     section.get(name).unwrap().parse().unwrap()
 }
-pub fn get_repo(path: &str) -> ostree::Repo {
-    //let options = RepoCheckoutAtOptions {
-    //    mode: RepoCheckoutMode::User,
-    //    overwrite_mode: RepoCheckoutOverwriteMode::UnionIdentical,
-    //    process_whiteouts: true,
-    //    bareuseronly_dirs: true,
-    //    no_copy_fallback: true,
-    //
-    //    force_copy: true,
-    //    enable_uncompressed_cache: false,
-    //    enable_fsync: false,
-    //    force_copy_zerosized: false,
-    //    subpath: None,
-    //    devino_to_csum_cache: None,
-    //    filter: None,
-    //    sepolicy: None,
-    //    sepolicy_prefix: None,
-    //};
-    //let o: Option<&RepoCheckoutAtOptions> = Some(&options);
-    //let options = ostree::RepoCheckoutAtOptions {
-    //    mode:
-    //}
 
+// Returns a ostree user repo from a given directory
+pub fn get_repo(path: &str) -> ostree::Repo {
     if !path_exists(path) {
         info!("Create new repo at {}", path);
         ostree::Repo::create_at(
@@ -143,13 +123,11 @@ pub fn get_log_level(level: &str) -> Level {
 static PATH_APPS: &str = "/apps";
 static PATH_REPO_APPS: &str = "/apps/ostree_repo";
 static OSTREE_DEPTH: i32 = 1;
+static VALIDATE_CHECKOUT: &str = "CheckoutDone";
 
 fn init_checkout_existing_containers() {
-    // res = True
     info!("Getting refs from repo:{}", PATH_REPO_APPS);
-    //// self.logger.info("Getting refs from repo:{}".format(PATH_REPO_APPS))
 
-    // try:
     let repo_container = get_repo(PATH_REPO_APPS);
     let refs = repo_container.list_refs(None, NONE_CANCELLABLE).unwrap();
     ////     [_, refs] = self.repo_containers.list_refs(None, None)
@@ -194,14 +172,10 @@ fn init_ostree_remotes(options: &OstreeOpts) -> Result<(), ()> {
     let refs = repo_container
         .list_refs(None, gio::NONE_CANCELLABLE)
         .unwrap();
-    //     [_, refs] = self.repo_containers.list_refs(None, None)
     info!(
         "Initalize remotes for the containers ostree: {:#?}",
         refs.keys()
     );
-    //     self.logger.info("Initalize remotes for the containers ostree: {}".format(refs))
-    //     for ref in refs:
-    //         remote_name = ref.split(':')[0]
     let remote_list = repo_container.remote_list();
     let remote_list: Vec<&str> = remote_list.iter().map(|i| i.as_str()).collect();
     info!("remote_list {:#?}", remote_list);
@@ -225,12 +199,6 @@ fn init_ostree_remotes(options: &OstreeOpts) -> Result<(), ()> {
     //             self.repo_containers.remote_add(remote_name,
     //                                             ostree_remote_attributes['url'],
     //                                             opts, None)
-
-    // except GLib.Error as e:
-    //     self.logger.error("OSTRee remote initialization failed ({})".format(str(e)))
-    //     res = False
-
-    // return res
 
     Ok(())
 }
@@ -282,7 +250,6 @@ fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result
                 &container_name.as_str(),
                 url
             );
-            // TODO ^ Try deleting the & and matching just "Ferris"
         } else {
             info!(
                 "For remote {}, {} was expected and {} was received. Replace it.",
@@ -331,7 +298,7 @@ fn pull_ostree_ref(_is_container: bool, metadata: &ChunkMetaData, name: &str) {
     options.insert_value("flags", &flags);
     let depth = OSTREE_DEPTH.to_variant();
     options.insert_value("depth", &depth);
-    let refs: &str = &rev;
+    let refs: &str = rev;
     let array = variant_utils::new_variant_as(&[refs]);
     options.insert_value("refs", &array);
     let options = options.end();
@@ -352,7 +319,7 @@ fn checkout_container(metadata: &ChunkMetaData, name: &str) {
             Some(string) => string,
         }
     };
-    // stop systemd units.
+    // TODO: stop systemd units.
     let options = RepoCheckoutAtOptions {
         overwrite_mode: RepoCheckoutOverwriteMode::UnionIdentical,
         process_whiteouts: true,
@@ -363,18 +330,29 @@ fn checkout_container(metadata: &ChunkMetaData, name: &str) {
     };
     let repo_container = get_repo(PATH_REPO_APPS);
     let destination_path = format!("{}/{}", PATH_APPS, name);
-    fs::remove_dir_all(&destination_path).unwrap();
+    let validation_file = format!("{}/{}", &destination_path, VALIDATE_CHECKOUT);
+    if path_exists(&destination_path) {
+        info!("Remove application directory {}", &destination_path);
+        fs::remove_dir_all(&destination_path).unwrap();
+    }
+    info!("Create application directory {}", &destination_path);
+
     fs::create_dir_all(&destination_path).unwrap();
     let dirfd = openat::Dir::open(&destination_path).expect("openat");
     repo_container
         .checkout_at(
             Some(&options),
             dirfd.as_raw_fd(),
-            destination_path,
-            &rev,
+            &destination_path,
+            rev,
             gio::NONE_CANCELLABLE,
         )
         .unwrap();
+    info!(
+        "Checked out application directory {} with revision ({})",
+        destination_path, rev
+    );
+    fs::File::create(validation_file).unwrap();
 }
 
 fn update_container(name: &str, metadata: ChunkMetaData, options: &OstreeOpts) {
@@ -466,7 +444,7 @@ async fn main() {
 
     loop {
         let reply = ddi.poll().await.expect("buh");
-        dbg!(&reply);
+        //dbg!(&reply);
 
         if let Some(request) = reply.config_data_request() {
             info!("Uploading config data");
@@ -489,7 +467,7 @@ async fn main() {
                 Err(error) => panic!("Problem opening the file: {:?}", error),
             };
 
-            dbg!(&update);
+            //dbg!(&update);
 
             update
                 .send_feedback(Execution::Proceeding, Finished::None, vec!["Downloading"])
