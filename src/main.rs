@@ -2,10 +2,10 @@ extern crate clap;
 extern crate hawkbit;
 extern crate ini;
 use crate::container_ostree::init_checkout_existing_containers;
-use crate::container_ostree::init_ostree_remotes;
 use crate::container_ostree::update_container;
 use crate::container_ostree::ChunkMetaData;
-use crate::container_ostree::OstreeOpts;
+use crate::ostree::OstreeOpts;
+use crate::rootfs_ostree::init_ostree_remotes;
 use clap::{AppSettings, Clap};
 use hawkbit::ddi::{Client, Execution, Finished};
 use ini::{Ini, Properties};
@@ -15,6 +15,8 @@ use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 
 mod container_ostree;
+mod ostree;
+mod rootfs_ostree;
 mod utils;
 pub use crate::utils::path_exists;
 

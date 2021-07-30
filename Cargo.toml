@@ -11,12 +11,13 @@ repository = "https://github.com/avrabe/fmu-rs.git"
 clap = "3.0.0-beta.2"
 rust-ini = "0.17"
 tracing = "0.1.26"
-tracing-subscriber = "0.2.18"
+tracing-subscriber = "0.2.19"
 hawkbit = { version = "0.4.0", features= ["hash-digest", "hash-md5", "hash-sha1", "hash-sha256"]}
 #hawkbit = {git = "https://github.com/avrabe/hawkbit-rs", branch = "metadata_support", features= ["hash-digest", "hash-md5", "hash-sha1", "hash-sha256"]}
 tokio = {version="1.6.0", features= ["full"]}
 serde = "1.0.126"
-libc = "0.2.92"
+serde_json = "1.0.64"
+libc = "0.2.98"
 ostree = { version = "0.11.0", features = ["v2021_2"]}
 ostree-ext = {git = "https://github.com/ostreedev/ostree-rs-ext.git", branch="main"}
 gio = "0.9.1"

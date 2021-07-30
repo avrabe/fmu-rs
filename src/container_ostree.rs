@@ -1,20 +1,83 @@
+use crate::ostree::OstreeOpts;
 use gio::NONE_CANCELLABLE;
 use glib::prelude::*; // or `use gtk::prelude::*;`
 use glib::VariantDict;
 use ostree::AsyncProgressExt;
-use ostree::RepoMode;
-use ostree::*;
+use ostree::{RepoCheckoutAtOptions, RepoCheckoutMode, RepoCheckoutOverwriteMode, RepoMode};
 use ostree_ext::variant_utils;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::os::unix::io::AsRawFd;
-use tracing::info;
+use tracing::{error, info};
+
+use std::error::Error;
+use std::fs::File;
+use std::io::BufReader;
+use std::path::Path;
 
 pub use crate::utils::path_exists;
 
 static PATH_APPS: &str = "/apps";
-static PATH_REPO_APPS: &str = "/apps/ostree_repo";
+pub static PATH_REPO_APPS: &str = "/apps/ostree_repo";
 static OSTREE_DEPTH: i32 = 1;
 static VALIDATE_CHECKOUT: &str = "CheckoutDone";
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct RevisionData {
+    pub current_rev: Option<String>,
+    pub previous_rev: Option<String>,
+}
+
+impl Default for RevisionData {
+    fn default() -> Self {
+        RevisionData {
+            current_rev: None,
+            previous_rev: None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_from_path() {
+        let p = Path::new("./");
+        assert_eq!(read_revision_from_file(p), RevisionData::default());
+    }
+
+    #[test]
+    fn default_from_non_existing_file() {
+        let p = Path::new("./bdaskdbkdhiu322");
+        assert_eq!(read_revision_from_file(p), RevisionData::default());
+    }
+}
+
+pub fn read_revision_from_file<P: AsRef<Path>>(path: P) -> RevisionData {
+    match _read_revision_from_file(&path) {
+        Ok(result) => result,
+        Err(error) => {
+            error!(
+                "Problem opening or reading the file {}: {:?}",
+                path.as_ref().display(),
+                error
+            );
+            RevisionData::default()
+        }
+    }
+}
+
+fn _read_revision_from_file<P: AsRef<Path>>(path: P) -> Result<RevisionData, Box<dyn Error>> {
+    // Open the file in read-only mode with buffer.
+    let file = File::open(path)?;
+
+    let reader = BufReader::new(file);
+
+    // Read the JSON contents of the file as an instance of `RevisionData`.
+    let u = serde_json::from_reader(reader)?;
+    Ok(u)
+}
 
 #[derive(Debug)]
 pub struct ChunkMetaData {
@@ -25,17 +88,7 @@ pub struct ChunkMetaData {
     pub timeout: u32,
 }
 
-#[derive(Debug)]
-pub struct OstreeOpts {
-    pub hostname: String,
-    pub ostree_name_remote: String,
-    pub ostree_gpg_verify: bool,
-    pub ostreepush_ssh_port: String,
-    pub ostreepush_ssh_user: String,
-    pub ostreepush_ssh_pwd: String,
-}
-
-// Returns a ostree user repo from a given directory
+// Returns a ostree user repo from a given directory-
 pub fn get_repo(path: &str) -> ostree::Repo {
     if !path_exists(path) {
         info!("Create new repo at {}", path);
@@ -52,7 +105,6 @@ pub fn get_repo(path: &str) -> ostree::Repo {
     ostree::Repo::open(&repo, gio::NONE_CANCELLABLE).unwrap();
     repo
 }
-
 fn pull_ostree_ref(_is_container: bool, metadata: &ChunkMetaData, name: &str) {
     let rev = {
         match &metadata.rev {
@@ -106,6 +158,9 @@ fn checkout_container(metadata: &ChunkMetaData, name: &str) {
     let repo_container = get_repo(PATH_REPO_APPS);
     let destination_path = format!("{}/{}", PATH_APPS, name);
     let validation_file = format!("{}/{}", &destination_path, VALIDATE_CHECKOUT);
+    let mut revisions = read_revision_from_file(&validation_file);
+    revisions.previous_rev = revisions.current_rev;
+    revisions.current_rev = Some(rev.to_string());
     if path_exists(&destination_path) {
         info!("Remove application directory {}", &destination_path);
         fs::remove_dir_all(&destination_path).unwrap();
@@ -127,6 +182,7 @@ fn checkout_container(metadata: &ChunkMetaData, name: &str) {
         "Checked out application directory {} with revision ({})",
         destination_path, rev
     );
+    // TODO: Now write the revisions into the validation file.
     fs::File::create(validation_file).unwrap();
 }
 
@@ -164,54 +220,6 @@ pub fn init_checkout_existing_containers() {
     //     res = False
     // finally:
     //     return res
-}
-
-pub fn init_ostree_remotes(options: &OstreeOpts) -> Result<(), ()> {
-    //// res = True
-    let repo_container = get_repo(PATH_REPO_APPS);
-
-    // self.ostree_remote_attributes = ostree_remote_attributes
-    // opts = GLib.Variant('a{sv}', {'gpg-verify': GLib.Variant('b', ostree_remote_attributes['gpg-verify'])})
-    // try:
-    //     self.logger.info("Initalize remotes for the OS ostree: {}".format(ostree_remote_attributes['name']))
-    //     if not ostree_remote_attributes['name'] in self.repo_os.remote_list():
-    //         self.repo_os.remote_add(ostree_remote_attributes['name'],
-    //                                 ostree_remote_attributes['url'],
-    //                                 opts, None)
-    //     self.remote_name_os = ostree_remote_attributes['name']
-
-    let refs = repo_container
-        .list_refs(None, gio::NONE_CANCELLABLE)
-        .unwrap();
-    info!(
-        "Initalize remotes for the containers ostree: {:#?}",
-        refs.keys()
-    );
-    let remote_list = repo_container.remote_list();
-    let remote_list: Vec<&str> = remote_list.iter().map(|i| i.as_str()).collect();
-    info!("remote_list {:#?}", remote_list);
-    for remote in remote_list.iter() {
-        let url = repo_container.remote_get_url(remote).unwrap();
-        let url = url.as_str();
-        info!("remote: {:#?} url: {:#?}", remote, url);
-        if options.hostname == url {
-            info!("reusing remote: {:#?} url: {:#?}", remote, url);
-            // TODO ^ Try deleting the & and matching just "Ferris"
-        } else {
-            info!(
-                "For remote {}, {} was expected and {} was received",
-                remote, options.hostname, url
-            );
-        }
-    }
-
-    //         if remote_name not in self.repo_containers.remote_list():
-    //             self.logger.info("We had the remote: {}".format(remote_name))
-    //             self.repo_containers.remote_add(remote_name,
-    //                                             ostree_remote_attributes['url'],
-    //                                             opts, None)
-
-    Ok(())
 }
 
 fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result<(), ()> {
