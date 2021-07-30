@@ -17,7 +17,8 @@ jobs:
         with:
           scan-type: 'config'
           hide-progress: false
-          format: 'table'
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
           exit-code: '1'
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
