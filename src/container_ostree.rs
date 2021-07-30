@@ -2,9 +2,9 @@ use crate::ostree::OstreeOpts;
 use gio::NONE_CANCELLABLE;
 use glib::prelude::*; // or `use gtk::prelude::*;`
 use glib::VariantDict;
-use ostree::AsyncProgressExt;
-use ostree::{RepoCheckoutAtOptions, RepoCheckoutMode, RepoCheckoutOverwriteMode, RepoMode};
-use ostree_ext::variant_utils;
+use ostree::{
+    AsyncProgress, RepoCheckoutAtOptions, RepoCheckoutMode, RepoCheckoutOverwriteMode, RepoMode,
+};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::os::unix::io::AsRawFd;
@@ -112,7 +112,7 @@ fn pull_ostree_ref(_is_container: bool, metadata: &ChunkMetaData, name: &str) {
             Some(string) => string,
         }
     };
-    let progress = ostree::AsyncProgress::new();
+    let progress = AsyncProgress::new();
     //TBD: Currently the default function pull_default_console_progress_changed
     //     is not available fro ostree-rs. Don't use it for now.
     //progress.connect("changed", true, ostree::Repo::pull_default_console_progress_changed());
@@ -126,7 +126,7 @@ fn pull_ostree_ref(_is_container: bool, metadata: &ChunkMetaData, name: &str) {
     let depth = OSTREE_DEPTH.to_variant();
     options.insert_value("depth", &depth);
     let refs: &str = rev;
-    let array = variant_utils::new_variant_as(&[refs]);
+    let array = vec![refs].to_variant();
     options.insert_value("refs", &array);
     let options = options.end();
 
