@@ -13,6 +13,7 @@ use tracing::{error, info};
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
+use std::io::BufWriter;
 use std::path::Path;
 
 pub use crate::utils::path_exists;
@@ -66,6 +67,14 @@ pub fn read_revision_from_file<P: AsRef<Path>>(path: P) -> RevisionData {
             RevisionData::default()
         }
     }
+}
+
+fn write_revision_to_file<P: AsRef<Path>>(path: P, data: RevisionData) {
+    // Open the file in read-only mode with buffer.
+    let file = File::create(path).unwrap();
+
+    let writer = BufWriter::new(file);
+    serde_json::to_writer_pretty(writer, &data).unwrap();
 }
 
 fn _read_revision_from_file<P: AsRef<Path>>(path: P) -> Result<RevisionData, Box<dyn Error>> {
@@ -183,7 +192,7 @@ fn checkout_container(metadata: &ChunkMetaData, name: &str) {
         destination_path, rev
     );
     // TODO: Now write the revisions into the validation file.
-    fs::File::create(validation_file).unwrap();
+    write_revision_to_file(validation_file, revisions);
 }
 
 pub fn update_container(name: &str, metadata: ChunkMetaData, options: &OstreeOpts) {
