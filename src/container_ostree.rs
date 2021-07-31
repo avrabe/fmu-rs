@@ -53,8 +53,18 @@ mod tests {
         let p = Path::new("./bdaskdbkdhiu322");
         assert_eq!(read_revision_from_file(p), RevisionData::default());
     }
+    #[test]
+    fn default_to_and_from_non_existing_file() {
+        let p = Path::new("./testfile");
+        let revision = RevisionData {
+            current_rev: Some("abcde".to_string()),
+            previous_rev: None,
+        };
+        write_revision_to_file(p, &revision);
+        assert_eq!(&read_revision_from_file(p), &revision);
+        fs::remove_file(p);
+    }
 }
-
 pub fn read_revision_from_file<P: AsRef<Path>>(path: P) -> RevisionData {
     match _read_revision_from_file(&path) {
         Ok(result) => result,
@@ -69,7 +79,7 @@ pub fn read_revision_from_file<P: AsRef<Path>>(path: P) -> RevisionData {
     }
 }
 
-fn write_revision_to_file<P: AsRef<Path>>(path: P, data: RevisionData) {
+fn write_revision_to_file<P: AsRef<Path>>(path: P, data: &RevisionData) {
     // Open the file in read-only mode with buffer.
     let file = File::create(path).unwrap();
 
@@ -192,7 +202,7 @@ fn checkout_container(metadata: &ChunkMetaData, name: &str) {
         destination_path, rev
     );
     // TODO: Now write the revisions into the validation file.
-    write_revision_to_file(validation_file, revisions);
+    write_revision_to_file(validation_file, &revisions);
 }
 
 pub fn update_container(name: &str, metadata: ChunkMetaData, options: &OstreeOpts) {
