@@ -6,6 +6,7 @@ use crate::container_ostree::update_container;
 use crate::container_ostree::ChunkMetaData;
 use crate::ostree::OstreeOpts;
 use crate::rootfs_ostree::init_ostree_remotes;
+use crate::systemd::systemd_start_unit;
 use clap::{AppSettings, Clap};
 use hawkbit::ddi::{Client, Execution, Finished};
 use ini::{Ini, Properties};
@@ -17,6 +18,7 @@ use tracing_subscriber::FmtSubscriber;
 mod container_ostree;
 mod ostree;
 mod rootfs_ostree;
+mod systemd;
 mod utils;
 pub use crate::utils::path_exists;
 
@@ -206,6 +208,7 @@ async fn main() {
                 };
                 info!("metadata: {:#?}", chunk_meta_data);
                 update_container(chunk.name(), chunk_meta_data, &ostree_opts);
+                systemd_start_unit(chunk.name());
             }
 
             update
