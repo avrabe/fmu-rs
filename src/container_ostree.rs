@@ -62,7 +62,7 @@ mod tests {
         };
         write_revision_to_file(p, &revision);
         assert_eq!(&read_revision_from_file(p), &revision);
-        fs::remove_file(p);
+        fs::remove_file(p).unwrap();
     }
 }
 pub fn read_revision_from_file<P: AsRef<Path>>(path: P) -> RevisionData {
