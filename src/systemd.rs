@@ -1,63 +1,66 @@
 extern crate rustbus;
-use rustbus::{connection::Timeout, get_system_bus_path, DuplexConn};
+use rustbus::{
+    connection::{rpc_conn::RpcConn, Timeout},
+    get_system_bus_path, DuplexConn,
+};
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use rustbus::MessageBuilder;
-
-    #[test]
-
-    fn sy_test() {
-        systemd_test();
-        systemd_start_unit("test");
-    }
-
-    #[test]
-    fn systemd_test() {
-        let system_path = get_system_bus_path().unwrap();
-        let mut con = DuplexConn::connect_to_bus(system_path, true).unwrap();
-        // Dont forget to send the obligatory hello message. send_hello wraps the call and parses the response for convenience.
-        let _unique_name = con.send_hello(Timeout::Infinite).unwrap();
-
-        // Next you will probably want to create a new message to send out to the world
-        let mut sig = MessageBuilder::new()
-            .signal(
-                "io.killing.spark".to_string(),
-                "TestSignal".to_string(),
-                "/io/killing/spark".to_string(),
-            )
-            .build();
-
-        // To put parameters into that message you use the sig.body.push_param functions. These accept anything that can be marshalled into a dbus parameter
-        // You can derive or manually implement that trait for your own types if you need that.
-        sig.body.push_param("My cool new Signal!").unwrap();
-
-        // Now send you signal to all that want to hear it!
-        let ctx = con.send.send_message(&sig).unwrap();
-        ctx.write_all().unwrap();
-    }
+pub(crate) fn disable_unit_file(unit: &str, runtime: bool) {
+    let (rpc_conn, mut msg) = create_manager("DisableUnitFiles");
+    let units = vec![unit];
+    msg.body.push_param(units).unwrap();
+    msg.body.push_param(&runtime).unwrap();
+    send_message(rpc_conn, msg);
 }
 
-pub fn systemd_start_unit(unit: &str) {
-    let system_path = get_system_bus_path().unwrap();
-    let mut con = DuplexConn::connect_to_bus(system_path, true).unwrap();
-    // Dont forget to send the obligatory hello message. send_hello wraps the call and parses the response for convenience.
-    let _unique_name = con.send_hello(Timeout::Infinite).unwrap();
+pub(crate) fn enable_unit_file(unit: &str, runtime: bool, force: bool) {
+    let (rpc_conn, mut msg) = create_manager("EnableUnitFiles");
+    let units = vec![unit];
+    msg.body.push_param(units).unwrap();
+    msg.body.push_param(&runtime).unwrap();
+    msg.body.push_param(&force).unwrap();
+    send_message(rpc_conn, msg);
+}
 
-    let mut rpc_conn = rustbus::connection::rpc_conn::RpcConn::new(con);
-    let mut msg = rustbus::message_builder::MessageBuilder::new()
-        .call("StartUnit")
-        .on("/org/freedesktop/systemd1")
-        .with_interface("org.freedesktop.systemd1.Manager")
-        .at("org.freedesktop.systemd1")
-        .build();
+pub(crate) fn start_unit(unit: &str) {
+    startstop_manager("StartUnit", unit);
+}
+
+pub(crate) fn stop_unit(unit: &str) {
+    startstop_manager("StopUnit", unit);
+}
+
+pub(crate) fn reload() {
+    let (rpc_conn, msg) = create_manager("Reload");
+    send_message(rpc_conn, msg);
+}
+
+fn startstop_manager(member: &str, unit: &str) {
+    let (rpc_conn, mut msg) = create_manager(member);
     msg.body.push_param(&unit).unwrap();
-    msg.body.push_param(&"start").unwrap();
+    msg.body.push_param(&"replace").unwrap();
 
+    send_message(rpc_conn, msg);
+}
+
+fn send_message(mut rpc_conn: RpcConn, mut msg: rustbus::message_builder::MarshalledMessage) {
     rpc_conn
         .send_message(&mut msg)
         .unwrap()
         .write_all()
         .unwrap();
+}
+
+fn create_manager(member: &str) -> (RpcConn, rustbus::message_builder::MarshalledMessage) {
+    let system_path = get_system_bus_path().unwrap();
+    let mut con = DuplexConn::connect_to_bus(system_path, true).unwrap();
+    let _unique_name = con.send_hello(Timeout::Infinite).unwrap();
+    let rpc_conn = RpcConn::new(con);
+    let msg: rustbus::message_builder::MarshalledMessage =
+        rustbus::message_builder::MessageBuilder::new()
+            .call(member)
+            .on("/org/freedesktop/systemd1")
+            .with_interface("org.freedesktop.systemd1.Manager")
+            .at("org.freedesktop.systemd1")
+            .build();
+    (rpc_conn, msg)
 }

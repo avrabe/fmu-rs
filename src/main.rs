@@ -6,7 +6,7 @@ use crate::container_ostree::update_container;
 use crate::container_ostree::ChunkMetaData;
 use crate::ostree::OstreeOpts;
 use crate::rootfs_ostree::init_ostree_remotes;
-use crate::systemd::systemd_start_unit;
+use crate::systemd::{disable_unit_file, enable_unit_file, reload, start_unit, stop_unit};
 use clap::{AppSettings, Clap};
 use hawkbit::ddi::{Client, Execution, Finished};
 use ini::{Ini, Properties};
@@ -207,8 +207,13 @@ async fn main() {
                     timeout,
                 };
                 info!("metadata: {:#?}", chunk_meta_data);
-                update_container(chunk.name(), chunk_meta_data, &ostree_opts);
-                systemd_start_unit(chunk.name());
+                let unit = chunk.name();
+                stop_unit(unit);
+                disable_unit_file(unit, false);
+                update_container(unit, chunk_meta_data, &ostree_opts);
+                enable_unit_file(unit, false, false);
+                reload();
+                start_unit(unit);
             }
 
             update
