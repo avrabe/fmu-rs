@@ -65,6 +65,10 @@ mod tests {
         fs::remove_file(p).unwrap();
     }
 }
+pub(crate) fn get_unit_path(unit: &str) -> String {
+    format!("{}/{}/", PATH_APPS, unit)
+}
+
 pub fn read_revision_from_file<P: AsRef<Path>>(path: P) -> RevisionData {
     match _read_revision_from_file(&path) {
         Ok(result) => result,

@@ -1,12 +1,15 @@
 extern crate clap;
 extern crate hawkbit;
 extern crate ini;
+use crate::container_ostree::get_unit_path;
 use crate::container_ostree::init_checkout_existing_containers;
 use crate::container_ostree::update_container;
 use crate::container_ostree::ChunkMetaData;
 use crate::ostree::OstreeOpts;
 use crate::rootfs_ostree::init_ostree_remotes;
-use crate::systemd::{disable_unit_file, enable_unit_file, reload, start_unit, stop_unit};
+use crate::systemd::{
+    create_unit, disable_unit_file, enable_unit_file, reload, start_unit, stop_unit,
+};
 use clap::{AppSettings, Clap};
 use hawkbit::ddi::{Client, Execution, Finished};
 use ini::{Ini, Properties};
@@ -211,6 +214,7 @@ async fn main() {
                 stop_unit(unit);
                 disable_unit_file(unit, false);
                 update_container(unit, chunk_meta_data, &ostree_opts);
+                create_unit(unit, &get_unit_path(unit));
                 enable_unit_file(unit, false, false);
                 reload();
                 start_unit(unit);
