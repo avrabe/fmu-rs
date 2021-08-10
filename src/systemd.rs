@@ -1,7 +1,9 @@
 extern crate rustbus;
 use rustbus::{
     connection::{rpc_conn::RpcConn, Timeout},
-    get_system_bus_path, DuplexConn,
+    get_system_bus_path,
+    message_builder::MarshalledMessage,
+    DuplexConn,
 };
 use std::fs;
 use tracing::info;
@@ -54,20 +56,38 @@ pub(crate) fn reload() {
     info!("reloaded systemd");
 }
 
+fn wait_response(msg: MarshalledMessage, ctx: u32, mut rpc_conn: RpcConn) {
+    let resp = rpc_conn
+        .wait_response(ctx, rustbus::connection::Timeout::Infinite)
+        .unwrap();
+
+    match msg.typ {
+        rustbus::message_builder::MessageType::Error => {
+            println!(
+                "Error name: {}",
+                resp.dynheader.error_name.as_ref().unwrap()
+            );
+            println!("Error: {}", resp.body.parser().get::<&str>().unwrap());
+        }
+        _ => {
+            info!("No error message received.");
+        }
+    };
+}
 fn startstop_manager(member: &str, unit: &str) {
     let (rpc_conn, mut msg) = create_manager(member);
     msg.body.push_param(&unit).unwrap();
     msg.body.push_param(&"replace").unwrap();
-
     send_message(rpc_conn, msg);
 }
 
 fn send_message(mut rpc_conn: RpcConn, mut msg: rustbus::message_builder::MarshalledMessage) {
-    rpc_conn
+    let ctx = rpc_conn
         .send_message(&mut msg)
         .unwrap()
         .write_all()
         .unwrap();
+    wait_response(msg, ctx, rpc_conn);
 }
 
 fn create_manager(member: &str) -> (RpcConn, rustbus::message_builder::MarshalledMessage) {
