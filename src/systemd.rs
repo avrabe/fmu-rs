@@ -9,7 +9,7 @@ use tracing::info;
 static PATH_SYSTEMD_UNITS: &str = "/etc/systemd/system/";
 
 pub(crate) fn create_unit(unit: &str, unit_path: &str) {
-    let destination = format!("{}{}.service ", PATH_SYSTEMD_UNITS, unit);
+    let destination = format!("{}{}.service", PATH_SYSTEMD_UNITS, unit);
     let source = format!("{}/systemd.service", unit_path);
     fs::copy(source, destination).unwrap();
 }
