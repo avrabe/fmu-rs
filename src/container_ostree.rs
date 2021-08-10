@@ -169,7 +169,6 @@ fn checkout_container(metadata: &ChunkMetaData, name: &str) {
             Some(string) => string,
         }
     };
-    // TODO: stop systemd units.
     let options = RepoCheckoutAtOptions {
         overwrite_mode: RepoCheckoutOverwriteMode::UnionIdentical,
         process_whiteouts: true,
@@ -205,7 +204,6 @@ fn checkout_container(metadata: &ChunkMetaData, name: &str) {
         "Checked out application directory {} with revision ({})",
         destination_path, rev
     );
-    // TODO: Now write the revisions into the validation file.
     write_revision_to_file(validation_file, &revisions);
 }
 
@@ -246,22 +244,13 @@ pub fn init_checkout_existing_containers() {
 }
 
 fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result<(), ()> {
-    // """
     // If the container does not exist, initialize its remote.
 
-    // Parameters:
-    // container_name (str): name of the container
-    // """
+    let r_options = VariantDict::default();
+    r_options.insert_value("gpg-verify", &options.ostree_gpg_verify.to_variant());
+    let r_options = &r_options.end();
+    let r_options = Some(r_options);
 
-    // # returns [('container-hello-world.service', 'description', 'loaded', 'failed', 'failed', '', '/org/freedesktop/systemd1/unit/wtk_2dnodejs_2ddemo_2eservice', 0, '', '/')]
-    // service = self.systemd.ListUnitsByNames([container_name + '.service'])
-
-    // try:
-    //     if (service[0][2] == 'not-found'):
-    //         # New service added, we need to connect to its remote
-    //         opts = GLib.Variant('a{sv}',
-    //                             {'gpg-verify': GLib.Variant('b', self.ostree_remote_attributes['gpg-verify'])})
-    //         # Check if this container was not installed previously
     let repo_container = get_repo(PATH_REPO_APPS);
     let remote_list = repo_container.remote_list();
     if !remote_list
@@ -277,7 +266,7 @@ fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result
             &repo_container,
             container_name.as_ref(),
             options.hostname.as_ref(),
-            None,
+            r_options,
             gio::NONE_CANCELLABLE,
         )
         .unwrap();
@@ -307,7 +296,7 @@ fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result
                 &repo_container,
                 container_name.as_ref(),
                 options.hostname.as_ref(),
-                None,
+                r_options,
                 gio::NONE_CANCELLABLE,
             )
             .unwrap();
