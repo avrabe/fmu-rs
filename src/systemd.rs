@@ -1,6 +1,4 @@
-extern crate libsystemd;
 extern crate rustbus;
-use libsystemd::unit::escape_name;
 use rustbus::{
     connection::{rpc_conn::RpcConn, Timeout},
     get_system_bus_path,
@@ -19,9 +17,10 @@ pub(crate) fn create_unit(unit: &str, unit_path: &str) {
 }
 
 pub(crate) fn disable_unit_file(unit: &str, runtime: bool) {
+    let unit = &(format!("{}.service", unit));
     info!("disabling unit {}", unit);
     let (rpc_conn, mut msg) = create_manager("DisableUnitFiles");
-    let units = vec![escape_name(unit)];
+    let units = vec![unit];
     msg.body.push_param(units).unwrap();
     msg.body.push_param(&runtime).unwrap();
     send_message(rpc_conn, msg);
@@ -29,9 +28,10 @@ pub(crate) fn disable_unit_file(unit: &str, runtime: bool) {
 }
 
 pub(crate) fn enable_unit_file(unit: &str, runtime: bool, force: bool) {
+    let unit = &(format!("{}.service", unit));
     info!("enabling unit {}", unit);
     let (rpc_conn, mut msg) = create_manager("EnableUnitFiles");
-    let units = vec![escape_name(unit)];
+    let units = vec![unit];
     msg.body.push_param(units).unwrap();
     msg.body.push_param(&runtime).unwrap();
     msg.body.push_param(&force).unwrap();
@@ -41,13 +41,13 @@ pub(crate) fn enable_unit_file(unit: &str, runtime: bool, force: bool) {
 
 pub(crate) fn start_unit(unit: &str) {
     info!("starting unit {}", unit);
-    startstop_manager("StartUnit", &escape_name(unit));
+    startstop_manager("StartUnit", unit);
     info!("started unit {}", unit);
 }
 
 pub(crate) fn stop_unit(unit: &str) {
     info!("stopping unit {}", unit);
-    startstop_manager("StopUnit", &escape_name(unit));
+    startstop_manager("StopUnit", unit);
     info!("stopped unit {}", unit);
 }
 
@@ -58,12 +58,12 @@ pub(crate) fn reload() {
     info!("reloaded systemd");
 }
 
-fn wait_response(msg: MarshalledMessage, ctx: u32, mut rpc_conn: RpcConn) {
+fn wait_response(ctx: u32, mut rpc_conn: RpcConn) {
     let resp = rpc_conn
         .wait_response(ctx, rustbus::connection::Timeout::Infinite)
         .unwrap();
 
-    if let rustbus::message_builder::MessageType::Error = msg.typ {
+    if let rustbus::message_builder::MessageType::Error = resp.typ {
         println!(
             "Error name: {}",
             resp.dynheader.error_name.as_ref().unwrap()
@@ -77,6 +77,7 @@ fn wait_response(msg: MarshalledMessage, ctx: u32, mut rpc_conn: RpcConn) {
     };
 }
 fn startstop_manager(member: &str, unit: &str) {
+    let unit = &(format!("{}.service", unit));
     let (rpc_conn, mut msg) = create_manager(member);
     msg.body.push_param(&unit).unwrap();
     msg.body.push_param(&"replace").unwrap();
@@ -89,10 +90,10 @@ fn send_message(mut rpc_conn: RpcConn, mut msg: rustbus::message_builder::Marsha
         .unwrap()
         .write_all()
         .unwrap();
-    wait_response(msg, ctx, rpc_conn);
+    wait_response(ctx, rpc_conn);
 }
 
-fn create_manager(member: &str) -> (RpcConn, rustbus::message_builder::MarshalledMessage) {
+fn create_manager(member: &str) -> (RpcConn, MarshalledMessage) {
     let system_path = get_system_bus_path().unwrap();
     let mut con = DuplexConn::connect_to_bus(system_path, true).unwrap();
     let _unique_name = con.send_hello(Timeout::Infinite).unwrap();
