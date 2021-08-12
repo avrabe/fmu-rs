@@ -52,7 +52,7 @@ pub(crate) fn stop_unit(unit: &str) {
 }
 
 pub(crate) fn reload() {
-    info!("reloading systemd");
+    info!(r#"reloading systemd"#);
     let (rpc_conn, msg) = create_manager("Reload");
     send_message(rpc_conn, msg);
     info!("reloaded systemd");
@@ -63,17 +63,17 @@ fn wait_response(msg: MarshalledMessage, ctx: u32, mut rpc_conn: RpcConn) {
         .wait_response(ctx, rustbus::connection::Timeout::Infinite)
         .unwrap();
 
-    match msg.typ {
-        rustbus::message_builder::MessageType::Error => {
-            println!(
-                "Error name: {}",
-                resp.dynheader.error_name.as_ref().unwrap()
-            );
-            println!("Error: {}", resp.body.parser().get::<&str>().unwrap());
-        }
-        _ => {
-            info!("No error message received.");
-        }
+    if let rustbus::message_builder::MessageType::Error = msg.typ {
+        println!(
+            "Error name: {}",
+            resp.dynheader.error_name.as_ref().unwrap()
+        );
+        println!("Error: {}", resp.body.parser().get::<&str>().unwrap());
+    } else {
+        info!(
+            "No error message received. Response: {}",
+            resp.body.parser().get::<&str>().unwrap()
+        );
     };
 }
 fn startstop_manager(member: &str, unit: &str) {
