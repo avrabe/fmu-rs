@@ -70,10 +70,7 @@ fn wait_response(ctx: u32, mut rpc_conn: RpcConn) {
         );
         println!("Error: {}", resp.body.parser().get::<&str>().unwrap());
     } else {
-        info!(
-            "No error message received. Response: {}",
-            resp.body.parser().get::<&str>().unwrap()
-        );
+        info!("No error message received. Response: {:?}", resp);
     };
 }
 fn startstop_manager(member: &str, unit: &str) {
