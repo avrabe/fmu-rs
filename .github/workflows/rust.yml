@@ -149,7 +149,7 @@ jobs:
           curl -L https://github.com/mozilla/grcov/releases/latest/download/grcov-linux-x86_64.tar.bz2 | tar jxf -
           sudo apt-get update
           sudo apt-get install build-essential pkg-config e2fslibs-dev libgpgme-dev libfuse-dev
-          git clone --depth 1 --branch v2020.4 https://github.com/ostreedev/ostree.git ostree
+          git clone https://github.com/ostreedev/ostree.git ostree
           cd ostree
           git submodule update --init
           env NOCONFIGURE=1 ./autogen.sh
