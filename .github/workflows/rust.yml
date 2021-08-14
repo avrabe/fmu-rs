@@ -153,7 +153,7 @@ jobs:
           cd ostree
           git submodule update --init
           env NOCONFIGURE=1 ./autogen.sh
-          ./configure --prefix/usr/
+          ./configure --prefix=/usr/
           make -j 10
           sudo make install
           cd ..
