@@ -148,9 +148,11 @@ fn pull_ostree_ref(_is_container: bool, metadata: &ChunkMetaData, name: &str) {
     options.insert_value("flags", &flags);
     let depth = OSTREE_DEPTH.to_variant();
     options.insert_value("depth", &depth);
-    let refs: &str = &(format!("{}@{}", name, rev));
+    let refs: &str = rev;
     let array = vec![refs].to_variant();
     options.insert_value("refs", &array);
+    let array = vec![name].to_variant();
+    options.insert_value("override-commit-ids", &array);
     let options = options.end();
 
     info!("Upgrader pulling {} from OSTree repo ({})", name, refs);
