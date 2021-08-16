@@ -142,13 +142,13 @@ fn pull_ostree_ref(_is_container: bool, metadata: &ChunkMetaData, name: &str) {
 
     // For options see: https://lazka.github.io/pgi-docs/OSTree-1.0/classes/Repo.html#OSTree.Repo.pull_with_options
     let options = VariantDict::default();
-    let flags = ostree::RepoPullFlags::MIRROR;
+    let flags = ostree::RepoPullFlags::NONE;
     let flags = flags.bits() as i32;
     let flags = flags.to_variant();
     options.insert_value("flags", &flags);
     let depth = OSTREE_DEPTH.to_variant();
     options.insert_value("depth", &depth);
-    let refs: &str = rev;
+    let refs: &str = &(format!("{}@{}", name, rev));
     let array = vec![refs].to_variant();
     options.insert_value("refs", &array);
     let options = options.end();
