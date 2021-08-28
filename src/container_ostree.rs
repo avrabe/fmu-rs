@@ -130,7 +130,7 @@ pub fn get_repo(path: &str) -> ostree::Repo {
     repo
 }
 fn pull_ostree_ref(_is_container: bool, metadata: &ChunkMetaData, name: &str) {
-    let _rev = {
+    let rev = {
         match &metadata.rev {
             None => return,
             Some(string) => string,
@@ -149,8 +149,8 @@ fn pull_ostree_ref(_is_container: bool, metadata: &ChunkMetaData, name: &str) {
     options.insert_value("flags", &flags);
     let depth = OSTREE_DEPTH.to_variant();
     options.insert_value("depth", &depth);
-    let refs: &str = name; //rev;
-    let array = vec![refs].to_variant();
+    let refs: &str = rev;
+    let array = vec![name, refs].to_variant();
     options.insert_value("refs", &array);
     let options = options.end();
 
