@@ -1,7 +1,8 @@
 use crate::ostree::OstreeOpts;
-use gio::NONE_CANCELLABLE;
-use glib::prelude::*; // or `use gtk::prelude::*;`
-use glib::VariantDict;
+use ostree::gio;
+use ostree::gio::NONE_CANCELLABLE;
+use ostree::glib::prelude::*; // or `use gtk::prelude::*;`
+use ostree::glib::VariantDict;
 use ostree::{
     AsyncProgress, RepoCheckoutAtOptions, RepoCheckoutMode, RepoCheckoutOverwriteMode, RepoMode,
 };

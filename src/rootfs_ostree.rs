@@ -1,6 +1,7 @@
 use crate::container_ostree::get_repo;
 use crate::container_ostree::PATH_REPO_APPS;
 use crate::ostree::OstreeOpts;
+use ostree::gio;
 use tracing::info;
 
 pub fn init_ostree_remotes(options: &OstreeOpts) -> Result<(), ()> {
