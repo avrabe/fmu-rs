@@ -152,8 +152,6 @@ fn pull_ostree_ref(_is_container: bool, metadata: &ChunkMetaData, name: &str) {
     let refs: &str = name; //rev;
     let array = vec![refs].to_variant();
     options.insert_value("refs", &array);
-    let array = vec![name].to_variant();
-    options.insert_value("override-commit-ids", &array);
     let options = options.end();
 
     info!("Upgrader pulling {} from OSTree repo ({})", name, refs);
