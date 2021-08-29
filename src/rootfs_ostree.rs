@@ -4,7 +4,7 @@ use crate::ostree::OstreeOpts;
 use ostree::gio;
 use tracing::info;
 
-pub fn init_ostree_remotes(options: &OstreeOpts) -> Result<(), ()> {
+pub fn _init_ostree_remotes(options: &OstreeOpts) -> Result<(), ()> {
     //// res = True
     let repo_container = get_repo(PATH_REPO_APPS);
 

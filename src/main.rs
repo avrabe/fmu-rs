@@ -1,12 +1,13 @@
 extern crate clap;
 extern crate hawkbit;
 extern crate ini;
+use crate::container_ostree::application_exists;
+use crate::container_ostree::checkout_container;
 use crate::container_ostree::get_unit_path;
-use crate::container_ostree::init_checkout_existing_containers;
 use crate::container_ostree::update_container;
+use crate::container_ostree::Application;
 use crate::container_ostree::ChunkMetaData;
 use crate::ostree::OstreeOpts;
-use crate::rootfs_ostree::init_ostree_remotes;
 use crate::systemd::{
     create_unit, disable_unit_file, enable_unit_file, reload, start_unit, stop_unit,
 };
@@ -141,8 +142,20 @@ async fn main() {
     };
     info!("{:?}", ostree_opts);
     // more program logic goes here...
-    init_checkout_existing_containers();
-    init_ostree_remotes(&ostree_opts).unwrap();
+    let applications = Application::new();
+    for application in applications.into_iter() {
+        if !application_exists(application.to_string()) {
+            let chunk_meta_data: ChunkMetaData = ChunkMetaData {
+                rev: Some(application.to_string()),
+                ..Default::default()
+            };
+            checkout_container(&chunk_meta_data, &application);
+        }
+        create_unit(&application, &get_unit_path(&application));
+        enable_unit_file(&application, false, false);
+        reload();
+        start_unit(&application);
+    }
 
     let ddi = Client::new(
         &hawkbit_opts.hostname,

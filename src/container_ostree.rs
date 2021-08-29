@@ -112,6 +112,17 @@ pub struct ChunkMetaData {
     pub timeout: u32,
 }
 
+impl Default for ChunkMetaData {
+    fn default() -> Self {
+        ChunkMetaData {
+            rev: None,
+            autostart: false,
+            autoremove: false,
+            notify: false,
+            timeout: 30,
+        }
+    }
+}
 // Returns a ostree user repo from a given directory-
 pub fn get_repo(path: &str) -> ostree::Repo {
     if !path_exists(path) {
@@ -163,7 +174,15 @@ fn pull_ostree_ref(_is_container: bool, metadata: &ChunkMetaData, name: &str) {
     info!("Upgrader pulled {} from OSTree repo ({})", name, refs);
 }
 
-fn checkout_container(metadata: &ChunkMetaData, name: &str) {
+fn get_application_path(name: &str) -> String {
+    format!("{}/{}", PATH_APPS, name)
+}
+
+fn get_validation_file(name: &str) -> String {
+    format!("{}/{}", get_application_path(name), VALIDATE_CHECKOUT)
+}
+
+pub(crate) fn checkout_container(metadata: &ChunkMetaData, name: &str) {
     let rev = {
         match &metadata.rev {
             None => return,
@@ -179,8 +198,8 @@ fn checkout_container(metadata: &ChunkMetaData, name: &str) {
         ..Default::default()
     };
     let repo_container = get_repo(PATH_REPO_APPS);
-    let destination_path = format!("{}/{}", PATH_APPS, name);
-    let validation_file = format!("{}/{}", &destination_path, VALIDATE_CHECKOUT);
+    let destination_path = get_application_path(name);
+    let validation_file = get_validation_file(name);
     let mut revisions = read_revision_from_file(&validation_file);
     revisions.previous_rev = revisions.current_rev;
     revisions.current_rev = Some(rev.to_string());
@@ -214,34 +233,45 @@ pub fn update_container(name: &str, metadata: ChunkMetaData, options: &OstreeOpt
     checkout_container(&metadata, name);
 }
 
-pub fn init_checkout_existing_containers() {
-    info!("Getting refs from repo:{}", PATH_REPO_APPS);
+pub(crate) struct Application(Vec<String>);
 
-    let repo_container = get_repo(PATH_REPO_APPS);
-    let refs = repo_container.list_refs(None, NONE_CANCELLABLE).unwrap();
-    ////     [_, refs] = self.repo_containers.list_refs(None, None)
-    info!("refs {:#?}", refs);
-    info!("There are {} containers to be started.", refs.keys().len());
-    ////     self.logger.info("There are {} containers to be started.".format(len(refs)))
-    //     for ref in refs:
-    //         container_name = ref.split(':')[1]
-    //         if not os.path.isfile(PATH_APPS + '/' + container_name + '/' + VALIDATE_CHECKOUT):
-    //             self.checkout_container(container_name, None)
-    //             self.update_container_ids(container_name)
-    //         if not res:
-    //             self.logger.error("Error when checking out container:{}".format(container_name))
-    //             break
-    //         self.create_unit(container_name)
-    //     self.systemd.Reload()
-    //     for ref in refs:
-    //         container_name = ref.split(':')[1]
-    //         if os.path.isfile(PATH_APPS + '/' + container_name + '/' + FILE_AUTOSTART):
-    //             self.start_unit(container_name)
-    // except (GLib.Error, Exception) as e:
-    //     self.logger.error("Error checking out containers repo ({})".format(e))
-    //     res = False
-    // finally:
-    //     return res
+impl Application {
+    pub(crate) fn new() -> Application {
+        info!("Getting refs from repo:{}", PATH_REPO_APPS);
+
+        let repo_container = get_repo(PATH_REPO_APPS);
+        let refs = repo_container.list_refs(None, NONE_CANCELLABLE).unwrap();
+        info!("refs {:#?}", refs);
+        info!("There are {} containers.", refs.keys().len());
+
+        let mut a = Application(Vec::new());
+        for key in refs.keys().into_iter() {
+            a.add(key.split(':').last().unwrap().to_string());
+        }
+        a
+    }
+
+    fn add(&mut self, elem: String) {
+        self.0.push(elem);
+    }
+}
+pub(crate) fn application_exists(name: String) -> bool {
+    path_exists(&get_validation_file(&name))
+}
+
+impl Default for Application {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl IntoIterator for Application {
+    type Item = String;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
 }
 
 fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result<(), ()> {
