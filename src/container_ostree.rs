@@ -233,10 +233,10 @@ pub fn update_container(name: &str, metadata: ChunkMetaData, options: &OstreeOpt
     checkout_container(&metadata, name);
 }
 
-pub(crate) struct Application(Vec<String>);
+pub(crate) struct Applications(Vec<String>);
 
-impl Application {
-    pub(crate) fn new() -> Application {
+impl Applications {
+    pub(crate) fn new() -> Applications {
         info!("Getting refs from repo:{}", PATH_REPO_APPS);
 
         let repo_container = get_repo(PATH_REPO_APPS);
@@ -244,7 +244,7 @@ impl Application {
         info!("refs {:#?}", refs);
         info!("There are {} containers.", refs.keys().len());
 
-        let mut a = Application(Vec::new());
+        let mut a = Applications(Vec::new());
         for key in refs.keys().into_iter() {
             a.add(key.split(':').last().unwrap().to_string());
         }
@@ -259,13 +259,13 @@ pub(crate) fn application_exists(name: String) -> bool {
     path_exists(&get_validation_file(&name))
 }
 
-impl Default for Application {
+impl Default for Applications {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl IntoIterator for Application {
+impl IntoIterator for Applications {
     type Item = String;
     type IntoIter = std::vec::IntoIter<Self::Item>;
 

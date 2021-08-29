@@ -5,7 +5,7 @@ use crate::container_ostree::application_exists;
 use crate::container_ostree::checkout_container;
 use crate::container_ostree::get_unit_path;
 use crate::container_ostree::update_container;
-use crate::container_ostree::Application;
+use crate::container_ostree::Applications;
 use crate::container_ostree::ChunkMetaData;
 use crate::ostree::OstreeOpts;
 use crate::systemd::{
@@ -142,11 +142,15 @@ async fn main() {
     };
     info!("{:?}", ostree_opts);
     // more program logic goes here...
-    let applications = Application::new();
+    let applications = Applications::new();
     for application in applications.into_iter() {
         if !application_exists(application.to_string()) {
             let chunk_meta_data: ChunkMetaData = ChunkMetaData {
-                rev: Some(application.to_string()),
+                rev: Some(format!(
+                    "{}:{}",
+                    application.to_string(),
+                    application.to_string()
+                )),
                 ..Default::default()
             };
             checkout_container(&chunk_meta_data, &application);
