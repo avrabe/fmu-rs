@@ -15,8 +15,9 @@ use clap::{AppSettings, Clap};
 use hawkbit::ddi::{Client, Execution, Finished};
 use ini::{Ini, Properties};
 use serde::Serialize;
+use std::time::Duration;
 use tokio::time::sleep;
-use tracing::{info, Level};
+use tracing::{info, warn, Level};
 use tracing_subscriber::FmtSubscriber;
 
 mod container_ostree;
@@ -170,81 +171,86 @@ async fn main() {
     .unwrap();
 
     loop {
-        let reply = ddi.poll().await.expect("buh");
-        //dbg!(&reply);
-
-        if let Some(request) = reply.config_data_request() {
-            info!("Uploading config data");
-            let data = ConfigData {
-                hw_revision: "1.0".to_string(),
-            };
-
-            request
-                .upload(Execution::Closed, Finished::Success, None, data, vec![])
-                .await
-                .expect("foo");
-        }
-
-        if let Some(update) = reply.update() {
-            info!("Pending update");
-
-            let update = update.fetch().await;
-            let update = match update {
-                Ok(update) => update,
-                Err(error) => panic!("Problem opening the file: {:?}", error),
-            };
-
-            //dbg!(&update);
-
-            update
-                .send_feedback(Execution::Proceeding, Finished::None, vec!["Downloading"])
-                .await
-                .expect("ff");
-
-            for chunk in update.chunks() {
-                info!("Retrieving {}\n", chunk.name());
-                let mut rev: Option<String> = None;
-                let mut autostart: bool = false;
-                let mut autoremove: bool = false;
-                let mut notify: bool = false;
-                let mut timeout: u32 = 0;
-
-                for metadata in chunk.metadata() {
-                    match metadata {
-                        ("rev", _) => rev = Some(metadata.1.to_string()),
-                        ("autostart", _) => autostart = metadata.1 == "1",
-                        ("autoremove", _) => autoremove = metadata.1 == "1",
-                        ("notify", _) => notify = metadata.1 == "1",
-                        ("timeout", _) => timeout = metadata.1.parse().unwrap(),
-                        (_, _) => info!("unknown metadata {:#?}", metadata),
-                    }
-                }
-                let chunk_meta_data: ChunkMetaData = ChunkMetaData {
-                    rev,
-                    autostart,
-                    autoremove,
-                    notify,
-                    timeout,
+        if let Ok(reply) = ddi.poll().await {
+            if let Some(request) = reply.config_data_request() {
+                info!("Uploading config data");
+                let data = ConfigData {
+                    hw_revision: "1.0".to_string(),
                 };
-                info!("metadata: {:#?}", chunk_meta_data);
-                let unit = chunk.name();
-                stop_unit(unit);
-                disable_unit_file(unit, false);
-                update_container(unit, chunk_meta_data, &ostree_opts);
-                create_unit(unit, &get_unit_path(unit));
-                enable_unit_file(unit, false, false);
-                reload();
-                start_unit(unit);
+
+                request
+                    .upload(Execution::Closed, Finished::Success, None, data, vec![])
+                    .await
+                    .expect("foo");
             }
 
-            update
-                .send_feedback(Execution::Closed, Finished::Success, vec![])
-                .await
-                .expect("fff");
-        }
+            if let Some(update) = reply.update() {
+                info!("Pending update");
 
-        let t = reply.polling_sleep().expect("fff");
-        info!("sleep for {:?}", t);
-        sleep(t).await;
+                let update = update.fetch().await;
+                let update = match update {
+                    Ok(update) => update,
+                    Err(error) => panic!("Problem opening the file: {:?}", error),
+                };
+
+                //dbg!(&update);
+
+                update
+                    .send_feedback(Execution::Proceeding, Finished::None, vec!["Downloading"])
+                    .await
+                    .expect("ff");
+
+                for chunk in update.chunks() {
+                    info!("Retrieving {}\n", chunk.name());
+                    let mut rev: Option<String> = None;
+                    let mut autostart: bool = false;
+                    let mut autoremove: bool = false;
+                    let mut notify: bool = false;
+                    let mut timeout: u32 = 0;
+
+                    for metadata in chunk.metadata() {
+                        match metadata {
+                            ("rev", _) => rev = Some(metadata.1.to_string()),
+                            ("autostart", _) => autostart = metadata.1 == "1",
+                            ("autoremove", _) => autoremove = metadata.1 == "1",
+                            ("notify", _) => notify = metadata.1 == "1",
+                            ("timeout", _) => timeout = metadata.1.parse().unwrap(),
+                            (_, _) => info!("unknown metadata {:#?}", metadata),
+                        }
+                    }
+                    let chunk_meta_data: ChunkMetaData = ChunkMetaData {
+                        rev,
+                        autostart,
+                        autoremove,
+                        notify,
+                        timeout,
+                    };
+                    info!("metadata: {:#?}", chunk_meta_data);
+                    let unit = chunk.name();
+                    stop_unit(unit);
+                    disable_unit_file(unit, false);
+                    update_container(unit, chunk_meta_data, &ostree_opts);
+                    create_unit(unit, &get_unit_path(unit));
+                    enable_unit_file(unit, false, false);
+                    reload();
+                    start_unit(unit);
+                }
+
+                update
+                    .send_feedback(Execution::Closed, Finished::Success, vec![])
+                    .await
+                    .expect("fff");
+            }
+
+            let t = reply.polling_sleep().expect("fff");
+            info!("sleep for {:?}", t);
+            sleep(t).await;
+        } else {
+            warn!("Problems while connecting to the server");
+            let t: Duration = Duration::new(30, 0);
+            info!("sleep for {:?}", t);
+            sleep(t).await;
+        }
+        //dbg!(&reply);
     }
 }
