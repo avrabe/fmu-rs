@@ -112,6 +112,7 @@ jobs:
           path: meta-fmu
       - name: copy and commit the recipe
         run: |
+          sed -i "s/PV_append/PV:append" fmu-rs_0.1.0.bb
           cp fmu-rs_0.1.0.bb meta-fmu/recipes-application/fmu/
           cd meta-fmu
           git config user.name 'fmubot'
