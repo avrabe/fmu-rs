@@ -10,14 +10,14 @@ repository = "https://github.com/avrabe/fmu-rs.git"
 [dependencies]
 clap = "3.0.0-beta.2"
 rust-ini = "0.17"
-tracing = "0.1.26"
-tracing-subscriber = "0.2.20"
+tracing = "0.1.29"
+tracing-subscriber = "0.2.25"
 hawkbit = { version = "0.6.0", features= ["hash-digest", "hash-md5", "hash-sha1", "hash-sha256"]}
 #hawkbit = {git = "https://github.com/avrabe/hawkbit-rs", branch = "metadata_support", features= ["hash-digest", "hash-md5", "hash-sha1", "hash-sha256"]}
-tokio = {version="1.10.1", features= ["full"]}
-serde = "1.0.129"
-serde_json = "1.0.66"
-libc = "0.2.101"
-ostree = { version = "0.12.3", features = ["v2021_2"]}
+tokio = {version="1.12.0", features= ["full"]}
+serde = "1.0.130"
+serde_json = "1.0.68"
+libc = "0.2.104"
+ostree = { version = "0.13.3", features = ["v2021_2"]}
 openat = "0.1.21"
 rustbus = "0.17.0"

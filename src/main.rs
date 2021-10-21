@@ -28,7 +28,13 @@ mod utils;
 pub use crate::utils::path_exists;
 
 pub fn get_ini_string(section: &Properties, name: &str) -> String {
-    section.get(name).unwrap().to_string()
+    if let Some(result) = section.get(name) {
+        result.to_string()
+    } else {
+        warn!("Missing configuration entry {}.", name);
+        "".to_string()
+    }
+    //section.get(name).unwrap_or_else(|| info!("ddd"); "").to_string()
 }
 
 pub fn get_ini_bool(section: &Properties, name: &str) -> bool {
@@ -61,7 +67,6 @@ struct HawkbitOpts {
     tenant_id: String,
     target_name: String,
     auth_token: String,
-    hawkbit_vendor_name: String,
 }
 
 pub fn get_log_level(level: &str) -> Level {
@@ -112,7 +117,6 @@ async fn main() {
     let hawkbit_url_type = if hawkbit_ssl { "https://" } else { "http://" };
     // setup hawkbit
     let hawkbit_opts: HawkbitOpts = HawkbitOpts {
-        hawkbit_vendor_name: get_ini_string(section, "hawkbit_vendor_name"),
         tenant_id: get_ini_string(section, "hawkbit_tenant_id"),
         target_name: get_ini_string(section, "hawkbit_target_name"),
         auth_token: get_ini_string(section, "hawkbit_auth_token"),

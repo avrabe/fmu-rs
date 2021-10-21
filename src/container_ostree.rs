@@ -24,19 +24,10 @@ pub static PATH_REPO_APPS: &str = "/apps/ostree_repo";
 static OSTREE_DEPTH: i32 = 1;
 static VALIDATE_CHECKOUT: &str = "CheckoutDone";
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct RevisionData {
     pub current_rev: Option<String>,
     pub previous_rev: Option<String>,
-}
-
-impl Default for RevisionData {
-    fn default() -> Self {
-        RevisionData {
-            current_rev: None,
-            previous_rev: None,
-        }
-    }
 }
 
 #[cfg(test)]
@@ -296,7 +287,7 @@ fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result
         ostree::Repo::remote_add(
             &repo_container,
             container_name.as_ref(),
-            options.hostname.as_ref(),
+            Some(options.hostname.as_ref()),
             r_options,
             gio::NONE_CANCELLABLE,
         )
@@ -326,7 +317,7 @@ fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result
             ostree::Repo::remote_add(
                 &repo_container,
                 container_name.as_ref(),
-                options.hostname.as_ref(),
+                Some(options.hostname.as_ref()),
                 r_options,
                 gio::NONE_CANCELLABLE,
             )
