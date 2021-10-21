@@ -65,7 +65,7 @@ jobs:
           git submodule update --init
           env NOCONFIGURE=1 ./autogen.sh
           ./configure --without-gpgme --prefix=/usr/
-          make -j 20
+          make -j 40
           sudo make install
           cd ..
           rm -rf ostree
@@ -92,13 +92,12 @@ jobs:
           git submodule update --init
           env NOCONFIGURE=1 ./autogen.sh
           ./configure --without-gpgme --prefix=/usr/
-          make -j 20
+          make -j 40
           sudo make install
           cd ..
           rm -rf ostree
           cargo install cargo-bitbake --locked
           cargo bitbake
-          mv fmu_rs_0.1.0.bb fmu-rs_0.1.0.bb
       - name: Archive code coverage results
         uses: actions/upload-artifact@v1
         with:
@@ -112,7 +111,8 @@ jobs:
           path: meta-fmu
       - name: copy and commit the recipe
         run: |
-          sed -i "s/PV_append/PV:append" fmu-rs_0.1.0.bb
+          mv fmu_rs_0.1.0.bb fmu-rs_0.1.0.bb
+          sed -ie "s/PV_append/PV:append" fmu-rs_0.1.0.bb
           cp fmu-rs_0.1.0.bb meta-fmu/recipes-application/fmu/
           cd meta-fmu
           git config user.name 'fmubot'
@@ -155,7 +155,7 @@ jobs:
           git submodule update --init
           env NOCONFIGURE=1 ./autogen.sh
           ./configure --without-gpgme --prefix=/usr/
-          make -j 20
+          make -j 40
           sudo make install
           cd ..
           rm -rf ostree
