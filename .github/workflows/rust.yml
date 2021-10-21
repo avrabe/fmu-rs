@@ -39,7 +39,7 @@ jobs:
           cd ostree 
           git submodule update --init
           env NOCONFIGURE=1 ./autogen.sh
-          ./configure --without-gpgme
+          ./configure --without-gpgme --prefix=/usr/
           make -j 20
           sudo make install
           cd ..
@@ -64,7 +64,7 @@ jobs:
           cd ostree 
           git submodule update --init
           env NOCONFIGURE=1 ./autogen.sh
-          ./configure --without-gpgme
+          ./configure --without-gpgme --prefix=/usr/
           make -j 20
           sudo make install
           cd ..
@@ -91,7 +91,7 @@ jobs:
           cd ostree 
           git submodule update --init
           env NOCONFIGURE=1 ./autogen.sh
-          ./configure --without-gpgme
+          ./configure --without-gpgme --prefix=/usr/
           make -j 20
           sudo make install
           cd ..
@@ -148,13 +148,13 @@ jobs:
         run: |
           curl -L https://github.com/mozilla/grcov/releases/latest/download/grcov-linux-x86_64.tar.bz2 | tar jxf -
           sudo apt-get update
-          sudo apt-get install build-essential pkg-config e2fslibs-dev libgpgme-dev libfuse-dev
+          sudo apt-get install -y build-essential pkg-config dh-autoreconf libglib2.0-dev bison liblzma-dev libext2fs-dev libgpgme-dev libfuse-dev
           git clone https://github.com/ostreedev/ostree.git ostree
           cd ostree
           git submodule update --init
           env NOCONFIGURE=1 ./autogen.sh
-          ./configure --prefix=/usr/
-          make -j 10
+          ./configure --without-gpgme --prefix=/usr/
+          make -j 20
           sudo make install
           cd ..
           rm -rf ostree
