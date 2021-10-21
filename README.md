@@ -6,9 +6,6 @@
 
 fmu-rs is a Rust implementation of FullMetalUpdate which handles update for the System on which it is running.
 
-It has been created in order to learn Rust by reimplementing an existing project used by the author.
-The program can execute but not update anything yet.
-
 # Building the application
 On Ubuntu 20.04 install rust and the needed external dependencies (libostree)
 ```bash
