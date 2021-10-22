@@ -27,25 +27,6 @@ mod systemd;
 mod utils;
 pub use crate::utils::path_exists;
 
-pub fn get_ini_string(section: &Properties, name: &str) -> String {
-    if let Some(result) = section.get(name) {
-        result.to_string()
-    } else {
-        warn!("Missing configuration entry {}.", name);
-        "".to_string()
-    }
-    //section.get(name).unwrap_or_else(|| info!("ddd"); "").to_string()
-}
-
-pub fn get_ini_bool(section: &Properties, name: &str) -> bool {
-    if let Some(result) = section.get(name) {
-        result.parse().unwrap()
-    } else {
-        warn!("Missing configuration entry {}.", name);
-        false
-    }
-}
-
 /// This doc string acts as a help message when the user runs '--help'
 /// as do all doc strings on fields
 #[derive(Clap)]
@@ -232,14 +213,58 @@ async fn main() {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn no_loglevel_in_ini() {
+        let ini = Ini::new();
+        assert_eq!(read_loglevel_configuration(&ini), "DEBUG");
+    }
+
+    #[test]
+    fn no_servername_in_ini() {
+        let ini = Ini::new();
+        assert_eq!(read_server_configuration(&ini), "localhost");
+    }
+}
+
+pub fn get_ini_string(section: &Properties, name: &str) -> String {
+    if let Some(result) = section.get(name) {
+        result.to_string()
+    } else {
+        warn!("Missing configuration entry {}.", name);
+        "".to_string()
+    }
+    //section.get(name).unwrap_or_else(|| info!("ddd"); "").to_string()
+}
+
+pub fn get_ini_bool(section: &Properties, name: &str) -> bool {
+    if let Some(result) = section.get(name) {
+        result.parse().unwrap()
+    } else {
+        warn!("Missing configuration entry {}.", name);
+        false
+    }
+}
+
 fn read_loglevel_configuration(conf: &Ini) -> String {
-    let section = conf.section(Some("client")).unwrap();
-    get_ini_string(section, "log_level")
+    if let Some(section) = conf.section(Some("client")) {
+        get_ini_string(section, "log_level")
+    } else {
+        warn!("Missing configuration section 'client' and entry 'log_level'. Fallback to 'DEBUG'.");
+        "DEBUG".to_string()
+    }
 }
 
 fn read_server_configuration(conf: &Ini) -> String {
-    let section = conf.section(Some("server")).unwrap();
-    get_ini_string(section, "server_host_name")
+    if let Some(section) = conf.section(Some("server")) {
+        get_ini_string(section, "server_host_name")
+    } else {
+        warn!("Missing configuration section 'server' and entry 'server_host_name'. Fallback to 'localhost'.");
+        "localhost".to_string()
+    }
 }
 
 fn read_hawkbit_configuration(conf: &Ini, server_host_name: &str) -> HawkbitOpts {
