@@ -38,7 +38,12 @@ pub fn get_ini_string(section: &Properties, name: &str) -> String {
 }
 
 pub fn get_ini_bool(section: &Properties, name: &str) -> bool {
-    section.get(name).unwrap().parse().unwrap()
+    if let Some(result) = section.get(name) {
+        result.parse().unwrap()
+    } else {
+        warn!("Missing configuration entry {}.", name);
+        false
+    }
 }
 
 /// This doc string acts as a help message when the user runs '--help'
@@ -88,15 +93,12 @@ async fn main() {
     // Read from the configuration file
     let conf = Ini::load_from_file(&opts.config).unwrap();
 
-    // Read the server information
-    let section = conf.section(Some("server")).unwrap();
-    let server_host_name = get_ini_string(section, "server_host_name");
+    let ini_log_level = read_loglevel_configuration(&conf);
 
-    let section = conf.section(Some("client")).unwrap();
     let log_level = if opts.debug {
         "debug".to_string()
     } else {
-        get_ini_string(section, "log_level")
+        ini_log_level
     };
 
     // a builder for `FmtSubscriber`.
@@ -111,41 +113,12 @@ async fn main() {
     info!("Value for config: {}", opts.config);
     info!("LogLevel: {}", log_level);
 
-    let hawkbit_url_port = get_ini_string(section, "hawkbit_url_port");
-    let hawkbit_ssl = get_ini_bool(section, "hawkbit_ssl");
-
-    let hawkbit_url_type = if hawkbit_ssl { "https://" } else { "http://" };
-    // setup hawkbit
-    let hawkbit_opts: HawkbitOpts = HawkbitOpts {
-        tenant_id: get_ini_string(section, "hawkbit_tenant_id"),
-        target_name: get_ini_string(section, "hawkbit_target_name"),
-        auth_token: get_ini_string(section, "hawkbit_auth_token"),
-        hostname: format!(
-            "{}{}:{}",
-            hawkbit_url_type, server_host_name, hawkbit_url_port
-        ),
-    };
-    info!("{:?}", hawkbit_opts);
-
+    // Read the server information
+    let server_host_name = read_server_configuration(&conf);
+    let hawkbit_opts = read_hawkbit_configuration(&conf, &server_host_name);
     // setup ostree
-    let section = conf.section(Some("ostree")).unwrap();
-    let ostree_ssl = get_ini_bool(section, "ostree_ssl");
-    let ostree_url_port = get_ini_string(section, "ostree_url_port");
-    let ostree_url_type = if ostree_ssl { "https://" } else { "http://" };
-    let ostree_url_prefix = get_ini_string(section, "ostree_url_prefix");
+    let ostree_opts = read_ostree_configuration(conf, server_host_name);
 
-    let ostree_opts: OstreeOpts = OstreeOpts {
-        hostname: format!(
-            "{}{}:{}/{}",
-            ostree_url_type, server_host_name, ostree_url_port, ostree_url_prefix
-        ),
-        ostree_name_remote: get_ini_string(section, "ostree_name_remote"),
-        ostree_gpg_verify: get_ini_bool(section, "ostree_gpg-verify"),
-        ostreepush_ssh_user: get_ini_string(section, "ostreepush_ssh_user"),
-        ostreepush_ssh_pwd: get_ini_string(section, "ostreepush_ssh_pwd"),
-        ostreepush_ssh_port: get_ini_string(section, "ostreepush_ssh_port"),
-    };
-    info!("{:?}", ostree_opts);
     // more program logic goes here...
     let applications = Applications::new();
     for application in applications.into_iter() {
@@ -257,4 +230,53 @@ async fn main() {
         }
         //dbg!(&reply);
     }
+}
+
+fn read_loglevel_configuration(conf: &Ini) -> String {
+    let section = conf.section(Some("client")).unwrap();
+    get_ini_string(section, "log_level")
+}
+
+fn read_server_configuration(conf: &Ini) -> String {
+    let section = conf.section(Some("server")).unwrap();
+    get_ini_string(section, "server_host_name")
+}
+
+fn read_hawkbit_configuration(conf: &Ini, server_host_name: &str) -> HawkbitOpts {
+    let section = conf.section(Some("client")).unwrap();
+    let hawkbit_url_port = get_ini_string(section, "hawkbit_url_port");
+    let hawkbit_ssl = get_ini_bool(section, "hawkbit_ssl");
+    let hawkbit_url_type = if hawkbit_ssl { "https://" } else { "http://" };
+    let hawkbit_opts: HawkbitOpts = HawkbitOpts {
+        tenant_id: get_ini_string(section, "hawkbit_tenant_id"),
+        target_name: get_ini_string(section, "hawkbit_target_name"),
+        auth_token: get_ini_string(section, "hawkbit_auth_token"),
+        hostname: format!(
+            "{}{}:{}",
+            hawkbit_url_type, server_host_name, hawkbit_url_port
+        ),
+    };
+    info!("{:?}", hawkbit_opts);
+    hawkbit_opts
+}
+
+fn read_ostree_configuration(conf: Ini, server_host_name: String) -> OstreeOpts {
+    let section = conf.section(Some("ostree")).unwrap();
+    let ostree_ssl = get_ini_bool(section, "ostree_ssl");
+    let ostree_url_port = get_ini_string(section, "ostree_url_port");
+    let ostree_url_type = if ostree_ssl { "https://" } else { "http://" };
+    let ostree_url_prefix = get_ini_string(section, "ostree_url_prefix");
+    let ostree_opts: OstreeOpts = OstreeOpts {
+        hostname: format!(
+            "{}{}:{}/{}",
+            ostree_url_type, server_host_name, ostree_url_port, ostree_url_prefix
+        ),
+        ostree_name_remote: get_ini_string(section, "ostree_name_remote"),
+        ostree_gpg_verify: get_ini_bool(section, "ostree_gpg-verify"),
+        ostreepush_ssh_user: get_ini_string(section, "ostreepush_ssh_user"),
+        ostreepush_ssh_pwd: get_ini_string(section, "ostreepush_ssh_pwd"),
+        ostreepush_ssh_port: get_ini_string(section, "ostreepush_ssh_port"),
+    };
+    info!("{:?}", ostree_opts);
+    ostree_opts
 }
