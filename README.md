@@ -73,8 +73,5 @@ Only within the kubernetes cluster
 | RabbitMQ | [http://localhost:15672](http://localhost:15672) | guest:guest |
 
 ## License
-<<<<<<< HEAD
-=======
 
->>>>>>> 5819004... Formatted based on lint warnings
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Favrabe%2Ffmu-rs.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Favrabe%2Ffmu-rs?ref=badge_large)
