@@ -4,7 +4,7 @@
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Favrabe%2Ffmu-rs.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Favrabe%2Ffmu-rs?ref=badge_shield)
 [![codecov](https://codecov.io/gh/avrabe/fmu-rs/branch/main/graph/badge.svg?token=bqz07qp5a3)](https://codecov.io/gh/avrabe/fmu-rs)
 
-fmu-rs is a Rust implementation of FullMetalUpdate which handles update for the System on which it is running.
+fmu-rs is a Rust implementation of FullMetalUpdate which handles update for the applications on a system on which it is running.
 
 ## Building the application
 
