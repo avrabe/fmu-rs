@@ -11,7 +11,7 @@ use crate::ostree::OstreeOpts;
 use crate::systemd::{
     create_unit, disable_unit_file, enable_unit_file, reload, start_unit, stop_unit,
 };
-use clap::{AppSettings, Clap};
+use clap::Parser;
 use hawkbit::ddi::{Client, Execution, Finished};
 use ini::{Ini, Properties};
 use serde::Serialize;
@@ -29,9 +29,8 @@ pub use crate::utils::path_exists;
 
 /// This doc string acts as a help message when the user runs '--help'
 /// as do all doc strings on fields
-#[derive(Clap)]
-#[clap(version = "1.0", author = "me")]
-#[clap(setting = AppSettings::ColoredHelp)]
+#[derive(Parser)]
+#[clap(version = "1.0", author = "Ralf Anton Beier")]
 struct Opts {
     /// Sets a custom config file. Could have been an Option<T> with no default too
     #[clap(short, long, default_value = "config.cfg")]
