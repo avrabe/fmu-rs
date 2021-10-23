@@ -236,7 +236,7 @@ impl Applications {
         info!("There are {} containers.", refs.keys().len());
 
         let mut a = Applications(Vec::new());
-        for key in refs.keys().into_iter() {
+        for key in refs.keys() {
             a.add(key.split(':').last().unwrap().to_string());
         }
         a

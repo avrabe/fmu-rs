@@ -105,11 +105,7 @@ async fn main() {
     for application in applications.into_iter() {
         if !application_exists(application.to_string()) {
             let chunk_meta_data: ChunkMetaData = ChunkMetaData {
-                rev: Some(format!(
-                    "{}:{}",
-                    application.to_string(),
-                    application.to_string()
-                )),
+                rev: Some(format!("{}:{}", application, application)),
                 ..Default::default()
             };
             checkout_container(&chunk_meta_data, &application);
