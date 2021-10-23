@@ -100,7 +100,7 @@ jobs:
           cargo bitbake
           mv fmu_rs_0.1.0.bb fmu-rs_0.1.0.bb
       - name: Archive code coverage results
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2.2.4
         with:
           name: bitbake file
           path: fmu-rs_0.1.0.bb
@@ -175,7 +175,7 @@ jobs:
           token: ${{secrets.CODECOV_TOKEN}}
   
       - name: Archive code coverage results
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2.2.4
         with:
           name: code-coverage-report
           path: cobertura.xml
