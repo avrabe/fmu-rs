@@ -9,7 +9,7 @@ use ostree::{
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::os::unix::io::AsRawFd;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 use std::error::Error;
 use std::fs::File;
@@ -134,7 +134,10 @@ pub fn get_repo(path: &str) -> ostree::Repo {
 fn pull_ostree_ref(_is_container: bool, metadata: &ChunkMetaData, name: &str) {
     let rev = {
         match &metadata.rev {
-            None => return,
+            None => {
+                warn!("No revision found. Using \"{}\" instead", name);
+                name
+            }
             Some(string) => string,
         }
     };
