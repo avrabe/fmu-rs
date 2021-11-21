@@ -38,6 +38,10 @@ struct Opts {
     /// Print debug information
     #[clap(short)]
     debug: bool,
+    /// Prefer to read the ostree commit for applications from
+    /// the version information instead of the meta data.
+    #[clap(short, long)]
+    ostree_commit_from_version: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -111,7 +115,10 @@ async fn main() {
         }
         create_unit(&application, &get_unit_path(&application));
         enable_unit_file(&application, false, false);
-        reload();
+    }
+    reload();
+    let applications = Applications::new();
+    for application in applications.into_iter() {
         start_unit(&application);
     }
 
@@ -169,6 +176,20 @@ async fn main() {
                             ("notify", _) => notify = metadata.1 == "1",
                             ("timeout", _) => timeout = metadata.1.parse().unwrap(),
                             (_, _) => info!("unknown metadata {:#?}", metadata),
+                        }
+                    }
+                    if opts.ostree_commit_from_version {
+                        let split: Vec<&str> = chunk.version().split(':').collect();
+                        if split.len() == 2 {
+                            rev = Some(split[1].to_string());
+                            info!(
+                                "For application {}, use commit {:#?} from version {}",
+                                chunk.name(),
+                                rev,
+                                chunk.version()
+                            );
+                        } else {
+                            warn!("For application {}, an't find a commit in version {} even though the option is set. Expect <version>:<commit> as version.", chunk.name(), chunk.version());
                         }
                     }
                     let chunk_meta_data: ChunkMetaData = ChunkMetaData {
