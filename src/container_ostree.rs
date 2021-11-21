@@ -1,4 +1,5 @@
 use crate::ostree::OstreeOpts;
+use crate::utils::path_is_empty;
 use ostree::gio;
 use ostree::gio::NONE_CANCELLABLE;
 use ostree::glib::prelude::*; // or `use gtk::prelude::*;`
@@ -33,6 +34,7 @@ pub struct RevisionData {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tempdir::TempDir;
 
     #[test]
     fn default_from_path() {
@@ -55,6 +57,15 @@ mod tests {
         write_revision_to_file(p, &revision);
         assert_eq!(&read_revision_from_file(p), &revision);
         fs::remove_file(p).unwrap();
+    }
+
+    #[test]
+    fn test_create_repo_in_empty_directory() {
+        let tmp_dir = TempDir::new("example").unwrap();
+        create_repo(tmp_dir.path().to_str().unwrap());
+        // For now check if there are files inside.
+        assert_eq!(path_is_empty(tmp_dir.path().to_str().unwrap()), false);
+        tmp_dir.close().unwrap();
     }
 }
 pub(crate) fn get_unit_path(unit: &str) -> String {
@@ -116,7 +127,14 @@ impl Default for ChunkMetaData {
 }
 // Returns a ostree user repo from a given directory-
 pub fn get_repo(path: &str) -> ostree::Repo {
-    if !path_exists(path) {
+    create_repo(path);
+    let repo = ostree::Repo::new_for_path(path);
+    repo.open(gio::NONE_CANCELLABLE).unwrap();
+    repo
+}
+
+fn create_repo(path: &str) {
+    if !path_exists(path) || path_is_empty(path) {
         info!("Create new repo at {}", path);
         ostree::Repo::create_at(
             libc::AT_FDCWD,
@@ -127,9 +145,6 @@ pub fn get_repo(path: &str) -> ostree::Repo {
         )
         .unwrap();
     }
-    let repo = ostree::Repo::new_for_path(path);
-    ostree::Repo::open(&repo, gio::NONE_CANCELLABLE).unwrap();
-    repo
 }
 fn pull_ostree_ref(_is_container: bool, metadata: &ChunkMetaData, name: &str) {
     let rev = {
