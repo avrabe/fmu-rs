@@ -11,7 +11,7 @@ repository = "https://github.com/avrabe/fmu-rs.git"
 clap = "3.0.0-beta.5"
 rust-ini = "0.17"
 tracing = "0.1.29"
-tracing-subscriber = "0.3.5"
+tracing-subscriber = "0.3.7"
 hawkbit = { version = "0.6.0", features= ["hash-digest", "hash-md5", "hash-sha1", "hash-sha256"]}
 #hawkbit = {git = "https://github.com/avrabe/hawkbit-rs", branch = "metadata_support", features= ["hash-digest", "hash-md5", "hash-sha1", "hash-sha256"]}
 tokio = {version="1.15.0", features= ["full"]}
