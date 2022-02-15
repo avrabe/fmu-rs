@@ -149,8 +149,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: install ostree from source (same version as specified in Cargo.toml)
-        run: |
-          curl -L https://github.com/mozilla/grcov/releases/latest/download/grcov-linux-x86_64.tar.bz2 | tar jxf -
+        run: | 
+          curl -L https://github.com/mozilla/grcov/releases/latest/download/grcov-linux-x86_64.tar.bz2 grcov-x86_64-unknown-linux-gnu.tar.bz2 | tar jxf -
           sudo apt-get update
           sudo apt-get install -y build-essential pkg-config dh-autoreconf libglib2.0-dev bison liblzma-dev libext2fs-dev libgpgme-dev libfuse-dev
           git clone https://github.com/ostreedev/ostree.git ostree
