@@ -17,7 +17,7 @@ hawkbit = { version = "0.6.0", features= ["hash-digest", "hash-md5", "hash-sha1"
 tokio = {version="1.16.1", features= ["full"]}
 serde = "1.0.136"
 serde_json = "1.0.79"
-libc = "0.2.118"
+libc = "0.2.119"
 ostree = { version = "0.13.6", features = ["v2021_2"]}
 openat = "0.1.21"
 rustbus = "0.17.0"
