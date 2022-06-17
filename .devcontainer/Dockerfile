@@ -14,3 +14,5 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
      && ./configure --without-gpgme --prefix=/usr/ \
      && make -j 20 \
      && make install
+
+USER vscode
