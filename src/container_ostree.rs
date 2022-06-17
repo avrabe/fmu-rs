@@ -25,7 +25,7 @@ pub static PATH_REPO_APPS: &str = "/apps/ostree_repo";
 static OSTREE_DEPTH: i32 = 1;
 static VALIDATE_CHECKOUT: &str = "CheckoutDone";
 
-#[derive(Default, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, PartialEq, Eq,  Serialize, Deserialize)]
 pub struct RevisionData {
     pub current_rev: Option<String>,
     pub previous_rev: Option<String>,
