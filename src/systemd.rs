@@ -22,7 +22,7 @@ pub(crate) fn disable_unit_file(unit: &str, runtime: bool) {
     let (rpc_conn, mut msg) = create_manager("DisableUnitFiles");
     let units = vec![unit];
     msg.body.push_param(units).unwrap();
-    msg.body.push_param(&runtime).unwrap();
+    msg.body.push_param(runtime).unwrap();
     send_message(rpc_conn, msg);
     info!("disabled unit {}", unit);
 }
@@ -33,8 +33,8 @@ pub(crate) fn enable_unit_file(unit: &str, runtime: bool, force: bool) {
     let (rpc_conn, mut msg) = create_manager("EnableUnitFiles");
     let units = vec![unit];
     msg.body.push_param(units).unwrap();
-    msg.body.push_param(&runtime).unwrap();
-    msg.body.push_param(&force).unwrap();
+    msg.body.push_param(runtime).unwrap();
+    msg.body.push_param(force).unwrap();
     send_message(rpc_conn, msg);
     info!("enabled unit {}", unit);
 }
@@ -76,8 +76,8 @@ fn wait_response(ctx: u32, mut rpc_conn: RpcConn) {
 fn startstop_manager(member: &str, unit: &str) {
     let unit = &(format!("{}.service", unit));
     let (rpc_conn, mut msg) = create_manager(member);
-    msg.body.push_param(&unit).unwrap();
-    msg.body.push_param(&"replace").unwrap();
+    msg.body.push_param(unit).unwrap();
+    msg.body.push_param("replace").unwrap();
     send_message(rpc_conn, msg);
 }
 

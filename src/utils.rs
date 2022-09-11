@@ -24,7 +24,7 @@ mod tests {
     #[test]
     fn test_path_is_empty() {
         let tmp_dir = TempDir::new("example").unwrap();
-        assert_eq!(path_is_empty(tmp_dir.path().to_str().unwrap()), true);
+        assert!(path_is_empty(tmp_dir.path().to_str().unwrap()));
         tmp_dir.close().unwrap();
     }
 }
