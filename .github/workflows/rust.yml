@@ -97,7 +97,6 @@ jobs:
           sudo make install
           cd ..
           rm -rf ostree
-          cargo install --git https://github.com/M4SS-Code/cargo-bitbake.git --branch upgrade-dependencies
           echo cargo install cargo-bitbake --locked
           cargo bitbake
           mv fmu_rs_0.1.0.bb fmu-rs_0.1.0.bb

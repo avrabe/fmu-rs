@@ -1,9 +1,13 @@
 [package]
 name = "fmu_rs"
-version = "0.1.0"
-authors = ["ralf"]
+version = "0.2.0"
+authors = ["avrabe <ralf_beier@me.com>"]
 edition = "2021"
+homepage = "https://github.com/avrabe/fmu-rs.git"
 repository = "https://github.com/avrabe/fmu-rs.git"
+license = "MIT"
+license_file = "LICENSE"
+description = "fmu-rs is a Rust implementation of FullMetalUpdate which handles update for the applications on a system on which it is running."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
