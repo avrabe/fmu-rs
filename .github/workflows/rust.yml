@@ -99,12 +99,12 @@ jobs:
           rm -rf ostree
           cargo install cargo-bitbake --locked
           cargo bitbake
-          mv fmu_rs_0.1.0.bb fmu-rs_0.1.0.bb
+          mv fmu_rs_0.2.0.bb fmu-rs_0.2.0.bb
       - name: Archive code coverage results
         uses: actions/upload-artifact@v3
         with:
           name: bitbake file
-          path: fmu-rs_0.1.0.bb
+          path: fmu-rs_0.2.0.bb
       - name: Checkout meta-fmu
         uses: actions/checkout@v3
         with:
@@ -113,8 +113,8 @@ jobs:
           path: meta-fmu
       - name: copy and commit the recipe
         run:  |
-          sed -ie "s/PV_append/PV:append/" fmu-rs_0.1.0.bb
-          cp fmu-rs_0.1.0.bb meta-fmu/recipes-application/fmu/
+          sed -ie "s/PV_append/PV:append/" fmu-rs_0.2.0.bb
+          cp fmu-rs_0.2.0.bb meta-fmu/recipes-application/fmu/
           cd meta-fmu
           git config user.name 'fmubot'
           git config user.email 'fmubot@users.noreply.github.com'
