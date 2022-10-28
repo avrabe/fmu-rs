@@ -69,7 +69,7 @@ mod tests {
     }
 }
 pub(crate) fn get_unit_path(unit: &str) -> String {
-    format!("{}/{}/", PATH_APPS, unit)
+    format!("{PATH_APPS}/{unit}/")
 }
 
 pub fn read_revision_from_file<P: AsRef<Path>>(path: P) -> RevisionData {
@@ -184,11 +184,11 @@ fn pull_ostree_ref(_is_container: bool, metadata: &ChunkMetaData, name: &str) {
 }
 
 fn get_application_path(name: &str) -> String {
-    format!("{}/{}", PATH_APPS, name)
+    format!("{PATH_APPS}/{name}")
 }
 
 fn get_validation_file(name: &str) -> String {
-    format!("{}/{}", get_application_path(name), VALIDATE_CHECKOUT)
+    format!("{}/{VALIDATE_CHECKOUT}", get_application_path(name))
 }
 
 pub(crate) fn checkout_container(metadata: &ChunkMetaData, name: &str) {
