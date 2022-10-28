@@ -11,13 +11,13 @@ use tracing::info;
 static PATH_SYSTEMD_UNITS: &str = "/etc/systemd/system/";
 
 pub(crate) fn create_unit(unit: &str, unit_path: &str) {
-    let destination = format!("{}{}.service", PATH_SYSTEMD_UNITS, unit);
-    let source = format!("{}/systemd.service", unit_path);
+    let destination = format!("{PATH_SYSTEMD_UNITS}{unit}.service");
+    let source = format!("{unit_path}/systemd.service");
     fs::copy(source, destination).unwrap();
 }
 
 pub(crate) fn disable_unit_file(unit: &str, runtime: bool) {
-    let unit = &(format!("{}.service", unit));
+    let unit = &(format!("{unit}.service"));
     info!("disabling unit {}", unit);
     let (rpc_conn, mut msg) = create_manager("DisableUnitFiles");
     let units = vec![unit];
@@ -28,7 +28,7 @@ pub(crate) fn disable_unit_file(unit: &str, runtime: bool) {
 }
 
 pub(crate) fn enable_unit_file(unit: &str, runtime: bool, force: bool) {
-    let unit = &(format!("{}.service", unit));
+    let unit = &(format!("{unit}.service"));
     info!("enabling unit {}", unit);
     let (rpc_conn, mut msg) = create_manager("EnableUnitFiles");
     let units = vec![unit];
@@ -74,7 +74,7 @@ fn wait_response(ctx: u32, mut rpc_conn: RpcConn) {
     };
 }
 fn startstop_manager(member: &str, unit: &str) {
-    let unit = &(format!("{}.service", unit));
+    let unit = &(format!("{unit}.service"));
     let (rpc_conn, mut msg) = create_manager(member);
     msg.body.push_param(unit).unwrap();
     msg.body.push_param("replace").unwrap();

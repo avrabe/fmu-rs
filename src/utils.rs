@@ -8,7 +8,7 @@ mod tests {
 
     #[test]
     fn current_path() {
-        assert_eq!(path_exists("./"), true);
+        assert!(path_exists("./"));
     }
 
     #[test]

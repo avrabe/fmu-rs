@@ -108,7 +108,7 @@ async fn main() {
     for application in applications.into_iter() {
         if !application_exists(application.to_string()) {
             let chunk_meta_data: ChunkMetaData = ChunkMetaData {
-                rev: Some(format!("{}:{}", application, application)),
+                rev: Some(format!("{application}:{application}")),
                 ..Default::default()
             };
             checkout_container(&chunk_meta_data, &application);
@@ -150,7 +150,7 @@ async fn main() {
                 let update = update.fetch().await;
                 let update = match update {
                     Ok(update) => update,
-                    Err(error) => panic!("Problem opening the file: {:?}", error),
+                    Err(error) => panic!("Problem opening the file: {error:?}"),
                 };
 
                 //dbg!(&update);
