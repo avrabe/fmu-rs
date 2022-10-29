@@ -1,7 +1,6 @@
 use crate::ostree::OstreeOpts;
 use crate::utils::path_is_empty;
-use ostree::gio;
-use ostree::gio::NONE_CANCELLABLE;
+use ostree::gio::Cancellable;
 use ostree::glib::prelude::*; // or `use gtk::prelude::*;`
 use ostree::glib::VariantDict;
 use ostree::{
@@ -129,7 +128,7 @@ impl Default for ChunkMetaData {
 pub fn get_repo(path: &str) -> ostree::Repo {
     create_repo(path);
     let repo = ostree::Repo::new_for_path(path);
-    repo.open(gio::NONE_CANCELLABLE).unwrap();
+    repo.open(None::<&Cancellable>).unwrap();
     repo
 }
 
@@ -141,7 +140,7 @@ fn create_repo(path: &str) {
             path,
             RepoMode::BareUserOnly,
             None,
-            gio::NONE_CANCELLABLE,
+            None::<&Cancellable>,
         )
         .unwrap();
     }
@@ -177,7 +176,7 @@ fn pull_ostree_ref(_is_container: bool, metadata: &ChunkMetaData, name: &str) {
     info!("Upgrader pulling {} from OSTree repo ({})", name, refs);
     let repo_container = get_repo(PATH_REPO_APPS);
     repo_container
-        .pull_with_options(name, &options, Some(&progress), gio::NONE_CANCELLABLE)
+        .pull_with_options(name, &options, Some(&progress), None::<&Cancellable>)
         .unwrap();
     progress.finish();
     info!("Upgrader pulled {} from OSTree repo ({})", name, refs);
@@ -226,7 +225,7 @@ pub(crate) fn checkout_container(metadata: &ChunkMetaData, name: &str) {
             dirfd.as_raw_fd(),
             &destination_path,
             rev,
-            gio::NONE_CANCELLABLE,
+            None::<&Cancellable>,
         )
         .unwrap();
     info!(
@@ -249,7 +248,7 @@ impl Applications {
         info!("Getting refs from repo:{}", PATH_REPO_APPS);
 
         let repo_container = get_repo(PATH_REPO_APPS);
-        let refs = repo_container.list_refs(None, NONE_CANCELLABLE).unwrap();
+        let refs = repo_container.list_refs(None, None::<&Cancellable>).unwrap();
         info!("refs {:#?}", refs);
         info!("There are {} containers.", refs.keys().len());
 
@@ -307,7 +306,7 @@ fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result
             container_name.as_ref(),
             Some(options.hostname.as_ref()),
             r_options,
-            gio::NONE_CANCELLABLE,
+            None::<&Cancellable>,
         )
         .unwrap();
     } else {
@@ -329,7 +328,7 @@ fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result
             ostree::Repo::remote_delete(
                 &repo_container,
                 container_name.as_ref(),
-                gio::NONE_CANCELLABLE,
+                None::<&Cancellable>,
             )
             .unwrap();
             ostree::Repo::remote_add(
@@ -337,7 +336,7 @@ fn init_container_remote(container_name: String, options: &OstreeOpts) -> Result
                 container_name.as_ref(),
                 Some(options.hostname.as_ref()),
                 r_options,
-                gio::NONE_CANCELLABLE,
+                None::<&Cancellable>,
             )
             .unwrap();
             info!(
