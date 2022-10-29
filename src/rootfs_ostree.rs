@@ -1,7 +1,7 @@
 use crate::container_ostree::get_repo;
 use crate::container_ostree::PATH_REPO_APPS;
 use crate::ostree::OstreeOpts;
-use ostree::gio;
+use ostree::gio::Cancellable;
 use tracing::info;
 
 pub fn _init_ostree_remotes(options: &OstreeOpts) -> Result<(), ()> {
@@ -19,7 +19,7 @@ pub fn _init_ostree_remotes(options: &OstreeOpts) -> Result<(), ()> {
     //     self.remote_name_os = ostree_remote_attributes['name']
 
     let refs = repo_container
-        .list_refs(None, gio::NONE_CANCELLABLE)
+        .list_refs(None, None::<&Cancellable>)
         .unwrap();
     info!(
         "Initalize remotes for the containers ostree: {:#?}",
