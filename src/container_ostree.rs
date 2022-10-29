@@ -251,7 +251,6 @@ impl Applications {
         let refs = repo_container
             .list_refs(None, None::<&Cancellable>)
             .unwrap();
-        
         info!("refs {:#?}", refs);
         info!("There are {} containers.", refs.keys().len());
 
