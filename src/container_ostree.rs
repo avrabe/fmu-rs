@@ -250,7 +250,7 @@ impl Applications {
         let repo_container = get_repo(PATH_REPO_APPS);
         let refs = repo_container
             .list_refs(None, None::<&Cancellable>)
-            .unwrap();        
+            .unwrap();
         
         info!("refs {:#?}", refs);
         info!("There are {} containers.", refs.keys().len());
