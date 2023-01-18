@@ -292,10 +292,7 @@ fn read_hawkbit_configuration(conf: &Ini, server_host_name: &str) -> HawkbitOpts
         tenant_id: get_ini_string(section, "hawkbit_tenant_id"),
         target_name: get_ini_string(section, "hawkbit_target_name"),
         auth_token: get_ini_string(section, "hawkbit_auth_token"),
-        hostname: format!(
-            "{}{}:{}",
-            hawkbit_url_type, server_host_name, hawkbit_url_port
-        ),
+        hostname: format!("{hawkbit_url_type}{server_host_name}:{hawkbit_url_port}"),
     };
     info!("{:?}", hawkbit_opts);
     hawkbit_opts
@@ -309,8 +306,7 @@ fn read_ostree_configuration(conf: Ini, server_host_name: String) -> OstreeOpts 
     let ostree_url_prefix = get_ini_string(section, "ostree_url_prefix");
     let ostree_opts: OstreeOpts = OstreeOpts {
         hostname: format!(
-            "{}{}:{}/{}",
-            ostree_url_type, server_host_name, ostree_url_port, ostree_url_prefix
+            "{ostree_url_type}{server_host_name}:{ostree_url_port}/{ostree_url_prefix}"
         ),
         ostree_name_remote: get_ini_string(section, "ostree_name_remote"),
         ostree_gpg_verify: get_ini_bool(section, "ostree_gpg-verify"),
