@@ -144,6 +144,9 @@ jobs:
   codecov-check:
     name: codecov-check
     runs-on: ubuntu-latest
+    container:
+      image: xd009642/tarpaulin:develop-nightly
+      options: --security-opt seccomp=unconfined    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -161,15 +164,9 @@ jobs:
           sudo make install
           cd ..
           rm -rf ostree
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - name: Run cargo-tarpaulin
-        uses: actions-rs/tarpaulin@v0.1
-        with:
-          version: '0.15.0'
-          args: '-- --test-threads 1'
+      - name: Run tarpaulin
+        run: |
+          cargo +nightly tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
   
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v3
