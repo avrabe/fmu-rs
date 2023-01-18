@@ -153,15 +153,15 @@ jobs:
       - name: install ostree from source (same version as specified in Cargo.toml)
         run: | 
           curl -L https://github.com/mozilla/grcov/releases/latest/download/grcov-x86_64-unknown-linux-gnu.tar.bz2 | tar jxf -
-          sudo apt-get update
-          sudo apt-get install -y build-essential pkg-config dh-autoreconf libglib2.0-dev bison liblzma-dev libext2fs-dev libgpgme-dev libfuse-dev
+          apt-get update
+          apt-get install -y build-essential pkg-config dh-autoreconf libglib2.0-dev bison liblzma-dev libext2fs-dev libgpgme-dev libfuse-dev
           git clone --depth 1 --branch v2022.1  https://github.com/ostreedev/ostree.git ostree
           cd ostree
           git submodule update --init
           env NOCONFIGURE=1 ./autogen.sh
           ./configure --without-gpgme --prefix=/usr/
           make -j 40
-          sudo make install
+          make install
           cd ..
           rm -rf ostree
       - name: Run tarpaulin
