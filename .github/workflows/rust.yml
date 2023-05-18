@@ -103,7 +103,7 @@ jobs:
       - name: update the CREATES recipe file
         run:  |
           cd meta-fmu
-          KAS_TARGET=fmu KAS_TASK=update_crates kas build fmu-project.yml
+          KAS_TARGET=fmu-rs KAS_TASK=update_crates kas build fmu-project.yml
       - name: Commit all changes
         run:  |
           cd meta-fmu
