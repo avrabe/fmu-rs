@@ -12,14 +12,14 @@ description = "fmu-rs is a Rust implementation of FullMetalUpdate which handles 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version="4.2.1", features = ["derive"]}
+clap = { version="4.2.7", features = ["derive"]}
 rust-ini = "0.18.0"
 tracing = "0.1.37"
 tracing-subscriber = "0.3.16"
 hawkbit = { version = "0.6.0", features= ["hash-digest", "hash-md5", "hash-sha1", "hash-sha256"]}
 #hawkbit = {git = "https://github.com/avrabe/hawkbit-rs", branch = "metadata_support", features= ["hash-digest", "hash-md5", "hash-sha1", "hash-sha256"]}
-tokio = {version="1.26.0", features= ["full"]}
-serde = "1.0.159"
+tokio = {version="1.28.1", features= ["full"]}
+serde = "1.0.163"
 serde_json = "1.0.96"
 libc = "0.2.141"
 ostree = { version = "0.17.1", features = ["v2021_2"]}
