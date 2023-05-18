@@ -84,37 +84,28 @@ jobs:
           toolchain: stable
           override: true
       - uses: Swatinem/rust-cache@v2
-      - name: create-bitbake
+      - name: prepare for update bitbake
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential pkg-config dh-autoreconf libglib2.0-dev bison liblzma-dev libext2fs-dev libgpgme-dev libfuse-dev
-          git clone --depth 1 --branch v2022.1  https://github.com/ostreedev/ostree.git
-          cd ostree 
-          git submodule update --init
-          env NOCONFIGURE=1 ./autogen.sh
-          ./configure --without-gpgme --prefix=/usr/
-          make -j 40
-          sudo make install
-          cd ..
-          rm -rf ostree
-          cargo install cargo-bitbake --locked
-          cargo bitbake
-          mv fmu_rs_0.2.0.bb fmu-rs_0.2.0.bb
-      - name: Archive code coverage results
-        uses: actions/upload-artifact@v3
-        with:
-          name: bitbake file
-          path: fmu-rs_0.2.0.bb
+          sudo apt-get install -y python3-pip
+          sudo pip3 install kas
+          sudo apt-get install -y gawk wget git-core diffstat unzip texinfo gcc-multilib build-essential chrpath socat libsdl1.2-dev xterm zstd cpio lz4         
       - name: Checkout meta-fmu
         uses: actions/checkout@v3
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           repository: avrabe/meta-fmu
           path: meta-fmu
-      - name: copy and commit the recipe
+      - name: update the SRCREV recipe file
         run:  |
-          sed -ie "s/PV_append/PV:append/" fmu-rs_0.2.0.bb
-          cp fmu-rs_0.2.0.bb meta-fmu/recipes-application/fmu/
+          commit_hash=$(git rev-parse HEAD)
+          echo "SRCREV = \"$commit_hash\"" >  meta-fmu/recipes-application/fmu/fmu-rs-srcrev.inc
+      - name: update the CREATES recipe file
+        run:  |
+          cd meta-fmu
+          KAS_TARGET=fmu KAS_TASK=update_crates kas build fmu-project.yml
+      - name: Commit all changes
+        run:  |
           cd meta-fmu
           git config user.name 'fmubot'
           git config user.email 'fmubot@users.noreply.github.com'
