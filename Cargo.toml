@@ -19,7 +19,7 @@ tracing-subscriber = "0.3.17"
 hawkbit = { version = "0.6.0", features= ["hash-digest", "hash-md5", "hash-sha1", "hash-sha256"]}
 #hawkbit = {git = "https://github.com/avrabe/hawkbit-rs", branch = "metadata_support", features= ["hash-digest", "hash-md5", "hash-sha1", "hash-sha256"]}
 tokio = {version="1.29.1", features= ["full"]}
-serde = "1.0.171"
+serde = "1.0.173"
 serde_json = "1.0.103"
 libc = "0.2.147"
 ostree = { version = "0.18.0", features = ["v2021_2"]}
