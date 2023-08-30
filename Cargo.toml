@@ -24,7 +24,7 @@ serde_json = "1.0.103"
 libc = "0.2.147"
 ostree = { version = "0.18.0", features = ["v2021_2"]}
 openat = "0.1.21"
-rustbus = "0.19.2"
+rustbus = "0.19.3"
 
 [dev-dependencies]
 tempdir = "0.3.7"
