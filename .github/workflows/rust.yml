@@ -112,7 +112,7 @@ jobs:
           git add -A
           git commit -m "Add new revision"
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v6
         with:
            token:  ${{ secrets.PUSH_TOKEN }}
            delete-branch: true
@@ -160,12 +160,12 @@ jobs:
           cargo +nightly tarpaulin --verbose --all-features --workspace --timeout 120 --out xml
   
       - name: Upload to codecov.io
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           token: ${{secrets.CODECOV_TOKEN}}
   
       - name: Archive code coverage results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: code-coverage-report
           path: cobertura.xml
