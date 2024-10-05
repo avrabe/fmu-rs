@@ -70,6 +70,7 @@ pub fn get_log_level(level: &str) -> Level {
 }
 
 #[tokio::main]
+#[allow(clippy::needless_return)]
 async fn main() {
     // Get the command line arguments
     let opts: Opts = Opts::parse();
@@ -109,7 +110,6 @@ async fn main() {
         if !application_exists(application.to_string()) {
             let chunk_meta_data: ChunkMetaData = ChunkMetaData {
                 rev: Some(format!("{application}:{application}")),
-                ..Default::default()
             };
             checkout_container(&chunk_meta_data, &application);
         }
@@ -153,8 +153,6 @@ async fn main() {
                     Err(error) => panic!("Problem opening the file: {error:?}"),
                 };
 
-                //dbg!(&update);
-
                 update
                     .send_feedback(Execution::Proceeding, Finished::None, vec!["Downloading"])
                     .await
@@ -163,18 +161,10 @@ async fn main() {
                 for chunk in update.chunks() {
                     info!("Retrieving {}\n", chunk.name());
                     let mut rev: Option<String> = None;
-                    let mut autostart: bool = false;
-                    let mut autoremove: bool = false;
-                    let mut notify: bool = false;
-                    let mut timeout: u32 = 0;
 
                     for metadata in chunk.metadata() {
                         match metadata {
                             ("rev", _) => rev = Some(metadata.1.to_string()),
-                            ("autostart", _) => autostart = metadata.1 == "1",
-                            ("autoremove", _) => autoremove = metadata.1 == "1",
-                            ("notify", _) => notify = metadata.1 == "1",
-                            ("timeout", _) => timeout = metadata.1.parse().unwrap(),
                             (_, _) => info!("unknown metadata {:#?}", metadata),
                         }
                     }
@@ -192,13 +182,7 @@ async fn main() {
                             warn!("For application {}, an't find a commit in version {} even though the option is set. Expect <version>:<commit> as version.", chunk.name(), chunk.version());
                         }
                     }
-                    let chunk_meta_data: ChunkMetaData = ChunkMetaData {
-                        rev,
-                        autostart,
-                        autoremove,
-                        notify,
-                        timeout,
-                    };
+                    let chunk_meta_data: ChunkMetaData = ChunkMetaData { rev };
                     info!("metadata: {:#?}", chunk_meta_data);
                     let unit = chunk.name();
                     stop_unit(unit);
@@ -225,24 +209,6 @@ async fn main() {
             info!("sleep for {:?}", t);
             sleep(t).await;
         }
-        //dbg!(&reply);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn no_loglevel_in_ini() {
-        let ini = Ini::new();
-        assert_eq!(read_loglevel_configuration(&ini), "DEBUG");
-    }
-
-    #[test]
-    fn no_servername_in_ini() {
-        let ini = Ini::new();
-        assert_eq!(read_server_configuration(&ini), "localhost");
     }
 }
 
@@ -308,12 +274,29 @@ fn read_ostree_configuration(conf: Ini, server_host_name: String) -> OstreeOpts 
         hostname: format!(
             "{ostree_url_type}{server_host_name}:{ostree_url_port}/{ostree_url_prefix}"
         ),
-        ostree_name_remote: get_ini_string(section, "ostree_name_remote"),
+        //ostree_name_remote: get_ini_string(section, "ostree_name_remote"),
         ostree_gpg_verify: get_ini_bool(section, "ostree_gpg-verify"),
-        ostreepush_ssh_user: get_ini_string(section, "ostreepush_ssh_user"),
-        ostreepush_ssh_pwd: get_ini_string(section, "ostreepush_ssh_pwd"),
-        ostreepush_ssh_port: get_ini_string(section, "ostreepush_ssh_port"),
+        //ostreepush_ssh_user: get_ini_string(section, "ostreepush_ssh_user"),
+        //ostreepush_ssh_pwd: get_ini_string(section, "ostreepush_ssh_pwd"),
+        //ostreepush_ssh_port: get_ini_string(section, "ostreepush_ssh_port"),
     };
     info!("{:?}", ostree_opts);
     ostree_opts
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn no_loglevel_in_ini() {
+        let ini = Ini::new();
+        assert_eq!(read_loglevel_configuration(&ini), "DEBUG");
+    }
+
+    #[test]
+    fn no_servername_in_ini() {
+        let ini = Ini::new();
+        assert_eq!(read_server_configuration(&ini), "localhost");
+    }
 }

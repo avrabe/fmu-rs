@@ -1,10 +1,18 @@
 use std::{fs::metadata, path::PathBuf};
 
+pub fn path_exists(path: &str) -> bool {
+    metadata(path).is_ok()
+}
+
+pub fn path_is_empty(path: &str) -> bool {
+    let dir_path_buf = PathBuf::from(path);
+    dir_path_buf.read_dir().unwrap().next().is_none()
+}
+
 #[cfg(test)]
 mod tests {
-    use tempdir::TempDir;
-
     use super::*;
+    use tempdir::TempDir;
 
     #[test]
     fn current_path() {
@@ -13,12 +21,12 @@ mod tests {
 
     #[test]
     fn bad_path() {
-        assert_eq!(path_exists("./sadsad/"), false);
+        assert!(!path_exists("./sadsad/"));
     }
 
     #[test]
     fn path_is_not_empty() {
-        assert_eq!(path_is_empty("./"), false);
+        assert!(!path_is_empty("./"));
     }
 
     #[test]
@@ -27,13 +35,4 @@ mod tests {
         assert!(path_is_empty(tmp_dir.path().to_str().unwrap()));
         tmp_dir.close().unwrap();
     }
-}
-
-pub fn path_exists(path: &str) -> bool {
-    metadata(path).is_ok()
-}
-
-pub fn path_is_empty(path: &str) -> bool {
-    let dir_path_buf = PathBuf::from(path);
-    dir_path_buf.read_dir().unwrap().next().is_none()
 }
