@@ -63,7 +63,7 @@ mod tests {
         let tmp_dir = TempDir::new("example").unwrap();
         create_repo(tmp_dir.path().to_str().unwrap());
         // For now check if there are files inside.
-        assert_eq!(path_is_empty(tmp_dir.path().to_str().unwrap()), false);
+        assert!(!path_is_empty(tmp_dir.path().to_str().unwrap()));
         tmp_dir.close().unwrap();
     }
 }
@@ -107,23 +107,12 @@ fn _read_revision_from_file<P: AsRef<Path>>(path: P) -> Result<RevisionData, Box
 #[derive(Debug)]
 pub struct ChunkMetaData {
     pub rev: Option<String>,
-    pub autostart: bool,
-    pub autoremove: bool,
-    pub notify: bool,
-    pub timeout: u32,
+    //pub autostart: bool,
+    //pub autoremove: bool,
+    //pub notify: bool,
+    //pub timeout: u32,
 }
 
-impl Default for ChunkMetaData {
-    fn default() -> Self {
-        ChunkMetaData {
-            rev: None,
-            autostart: false,
-            autoremove: false,
-            notify: false,
-            timeout: 30,
-        }
-    }
-}
 // Returns a ostree user repo from a given directory-
 pub fn get_repo(path: &str) -> ostree::Repo {
     create_repo(path);
