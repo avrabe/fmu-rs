@@ -22,7 +22,7 @@ tokio = {version="1.36.0", features= ["full"]}
 serde = "1.0.210"
 serde_json = "1.0.114"
 libc = "0.2.153"
-ostree = { version = "0.18.0", features = ["v2021_2"]}
+ostree = { version = "0.19.1", features = ["v2021_2"]}
 openat = "0.1.21"
 rustbus = "0.19.3"
 
