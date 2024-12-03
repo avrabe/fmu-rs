@@ -14,7 +14,7 @@ description = "fmu-rs is a Rust implementation of FullMetalUpdate which handles 
 [dependencies]
 clap = { version="4.5.21", features = ["derive"]}
 rust-ini = "0.21.1"
-tracing = "0.1.40"
+tracing = "0.1.41"
 tracing-subscriber = "0.3.18"
 hawkbit = { version = "0.6.0", features= ["hash-digest", "hash-md5", "hash-sha1", "hash-sha256"]}
 #hawkbit = {git = "https://github.com/avrabe/hawkbit-rs", branch = "metadata_support", features= ["hash-digest", "hash-md5", "hash-sha1", "hash-sha256"]}
