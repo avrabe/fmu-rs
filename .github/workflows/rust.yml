@@ -48,6 +48,9 @@ jobs:
 
   build-rust:
     runs-on: ubuntu-latest
+    container:
+      image: ubuntu:latest
+      options: --privileged
     steps:
     - uses: actions/checkout@v4
     - name: Install stable toolchain
