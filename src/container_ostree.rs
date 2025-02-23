@@ -245,7 +245,7 @@ impl Applications {
 
         let mut a = Applications(Vec::new());
         for key in refs.keys() {
-            a.add(key.split(':').last().unwrap().to_string());
+            a.add(key.split(':').next_back().unwrap().to_string());
         }
         a
     }
