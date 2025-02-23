@@ -103,6 +103,7 @@ jobs:
       - name: update the CREATES recipe file
         run:  |
           cd meta-fmu
+          sudo sysctl kernel.unprivileged_userns_clone=1
           KAS_TARGET=fmu-rs KAS_TASK=update_crates kas build fmu-project.yml
       - name: Commit all changes
         run:  |
